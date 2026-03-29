@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { uploadVideo } from '@/lib/uploadVideo';
+import { logger } from '@/lib/logger';
 
 export default function UploadForm() {
   const [file, setFile] = useState(null);
@@ -25,16 +26,26 @@ export default function UploadForm() {
 
   async function handleUpload() {
     if (!file) {
+      logger.warn('UploadForm', 'Upload attempted with no file selected');
       setError('Please select a video file first.');
       return;
     }
+  
+    logger.info('UploadForm', 'Upload initiated', {
+      filename: file.name,
+      contributor: contributor || 'anonymous',
+    });
+  
     setStatus('uploading');
     setError(null);
+  
     try {
       const data = await uploadVideo(file, contributor, note, (p) => setProgress(p));
+      logger.success('UploadForm', 'Upload complete', { id: data.id });
       setResult(data);
       setStatus('success');
     } catch (err) {
+      logger.error('UploadForm', 'Upload failed', { message: err.message });
       setError(err.message);
       setStatus('error');
     }

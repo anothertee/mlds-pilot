@@ -1,8 +1,9 @@
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
-import { getAuth } from 'firebase/auth';
+import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
+import { logger } from './logger';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -16,8 +17,10 @@ const firebaseConfig = {
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
 if (typeof window !== 'undefined') {
-  self.FIREBASE_APPCHECK_DEBUG_TOKEN =
-    process.env.NEXT_PUBLIC_FIREBASE_APP_CHECK_DEBUG_TOKEN || true;
+  if (process.env.NODE_ENV === 'development') {
+    self.FIREBASE_APPCHECK_DEBUG_TOKEN =
+      process.env.NEXT_PUBLIC_FIREBASE_APP_CHECK_DEBUG_TOKEN || true;
+  }
 
   initializeAppCheck(app, {
     provider: new ReCaptchaV3Provider(
@@ -30,4 +33,30 @@ if (typeof window !== 'undefined') {
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 export const auth = getAuth(app);
+
+export async function ensureAuth() {
+  return new Promise((resolve, reject) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      unsubscribe();
+      if (user) {
+        logger.info('Auth', 'User already authenticated', { uid: user.uid });
+        resolve(user);
+      } else {
+        try {
+          const result = await signInAnonymously(auth);
+          logger.success('Auth', 'Anonymous sign-in successful', {
+            uid: result.user.uid,
+          });
+          resolve(result.user);
+        } catch (error) {
+          logger.error('Auth', 'Anonymous sign-in failed', {
+            message: error.message,
+          });
+          reject(error);
+        }
+      }
+    });
+  });
+}
+
 export default app;
