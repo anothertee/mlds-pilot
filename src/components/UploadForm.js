@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { uploadVideo } from '@/lib/uploadVideo';
 import { logger } from '@/lib/logger';
 
 export default function UploadForm() {
@@ -30,25 +29,99 @@ export default function UploadForm() {
       setError('Please select a video file first.');
       return;
     }
-  
+
     logger.info('UploadForm', 'Upload initiated', {
       filename: file.name,
       contributor: contributor || 'anonymous',
     });
-  
+
     setStatus('uploading');
     setError(null);
-  
+
     try {
-      const data = await uploadVideo(file, contributor, note, (p) => setProgress(p));
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('contributor', contributor);
+      formData.append('note', note);
+
+      setProgress(25);
+
+      const uploadResponse = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!uploadResponse.ok) {
+        const err = await uploadResponse.json();
+        throw new Error(err.error || 'Upload failed');
+      }
+
+      const data = await uploadResponse.json();
+      setProgress(100);
+
       logger.success('UploadForm', 'Upload complete', { id: data.id });
       setResult(data);
+      setStatus('analyzing');
+
+      const tags = await analyzeVideo(data.gcsUri, data.id);
+      setResult((prev) => ({ ...prev, autoTags: tags }));
       setStatus('success');
     } catch (err) {
-      logger.error('UploadForm', 'Upload failed', { message: err.message });
+      logger.error('UploadForm', 'Process failed', { message: err.message });
       setError(err.message);
       setStatus('error');
     }
+  }
+
+  async function analyzeVideo(gcsUri, submissionId) {
+    logger.info('UploadForm', 'Starting auto-tagging', { submissionId });
+
+    const startResponse = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ gcsUri, submissionId }),
+    });
+
+    if (!startResponse.ok) {
+      const error = await startResponse.json();
+      throw new Error(error.error || 'Failed to start analysis');
+    }
+
+    const { operationName } = await startResponse.json();
+    logger.info('UploadForm', 'Analysis started', { operationName });
+
+    return new Promise((resolve, reject) => {
+      const poll = setInterval(async () => {
+        try {
+          const statusResponse = await fetch('/api/analyze/status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ operationName, submissionId }),
+          });
+
+          if (!statusResponse.ok) {
+            clearInterval(poll);
+            reject(new Error('Status check failed'));
+            return;
+          }
+
+          const status = await statusResponse.json();
+
+          if (status.done) {
+            clearInterval(poll);
+            logger.success('UploadForm', 'Auto-tagging complete', {
+              tags: status.autoTags,
+            });
+            resolve(status.autoTags);
+          } else {
+            logger.info('UploadForm', 'Still processing...');
+          }
+        } catch (error) {
+          clearInterval(poll);
+          reject(error);
+        }
+      }, 5000);
+    });
   }
 
   return (
@@ -100,28 +173,60 @@ export default function UploadForm() {
         {status === 'uploading' && (
           <div className="space-y-1">
             <div className="w-full bg-gray-100 rounded-full h-2">
-              <div className="bg-gray-800 h-2 rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
+              <div
+                className="bg-gray-800 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${progress}%` }}
+              />
             </div>
             <p className="text-sm text-gray-500">{progress}% uploaded</p>
           </div>
         )}
 
+        {status === 'analyzing' && (
+          <div className="p-4 bg-gray-50 rounded border border-gray-200">
+            <p className="text-sm text-gray-500 animate-pulse">
+              Analysing movement... this may take 20–30 seconds.
+            </p>
+          </div>
+        )}
+
         {error && <p className="text-sm text-red-500">{error}</p>}
 
-        {status === 'success' && (
-          <div className="p-4 bg-gray-50 rounded border border-gray-200">
+        {status === 'success' && result && (
+          <div className="p-4 bg-gray-50 rounded border border-gray-200 space-y-3">
             <p className="text-sm font-medium text-gray-700">Upload complete</p>
-            <p className="text-xs text-gray-500 mt-1">Submission ID: {result.id}</p>
-            <p className="text-xs text-gray-500">Your video has been submitted for review. Auto-tagging will begin shortly.</p>
+            <p className="text-xs text-gray-500">Submission ID: {result.id}</p>
+
+            {result.autoTags && result.autoTags.length > 0 && (
+              <div>
+                <p className="text-xs font-medium text-gray-600 mb-1">
+                  Auto-generated tags:
+                </p>
+                <ul className="space-y-1">
+                  {result.autoTags.map((tag, i) => (
+                    <li key={i} className="flex justify-between text-xs text-gray-500">
+                      <span>{tag.label}</span>
+                      <span className="text-gray-400">
+                        {(tag.score * 100).toFixed(0)}%
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <p className="text-xs text-gray-500">
+              Your video has been submitted for community review.
+            </p>
           </div>
         )}
 
         <button
           onClick={handleUpload}
-          disabled={status === 'uploading' || !file}
+          disabled={status === 'uploading' || status === 'analyzing' || !file}
           className="w-full py-2 px-4 bg-gray-900 text-white text-sm font-medium rounded hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          {status === 'uploading' ? 'Uploading...' : 'Upload video'}
+          {status === 'uploading' ? 'Uploading...' : status === 'analyzing' ? 'Analysing...' : 'Upload video'}
         </button>
       </div>
     </div>
