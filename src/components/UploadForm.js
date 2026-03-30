@@ -196,25 +196,12 @@ export default function UploadForm() {
           <div className="p-4 bg-gray-50 rounded border border-gray-200 space-y-3">
             <p className="text-sm font-medium text-gray-700">Upload complete</p>
             <p className="text-xs text-gray-500">Submission ID: {result.id}</p>
-
-            {result.autoTags && result.autoTags.length > 0 && (
-              <div>
-                <p className="text-xs font-medium text-gray-600 mb-1">
-                  Auto-generated tags:
-                </p>
-                <ul className="space-y-1">
-                  {result.autoTags.map((tag, i) => (
-                    <li key={i} className="flex justify-between text-xs text-gray-500">
-                      <span>{tag.label}</span>
-                      <span className="text-gray-400">
-                        {(tag.score * 100).toFixed(0)}%
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
+            <a
+              href={`/submission/${result.id}`}
+              className="text-xs text-gray-700 underline hover:text-gray-900"
+            >
+              View submission &#8594;
+            </a>
             <p className="text-xs text-gray-500">
               Your video has been submitted for community review.
             </p>
