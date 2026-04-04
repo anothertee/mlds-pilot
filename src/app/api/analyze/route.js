@@ -47,6 +47,8 @@ export async function POST(request) {
         labelDetectionConfig: {
           labelDetectionMode: 'SHOT_AND_FRAME_MODE',
           stationaryCamera: false,
+          frameConfidenceThreshold: 0.3,
+          videoConfidenceThreshold: 0.3,
         },
       },
     };

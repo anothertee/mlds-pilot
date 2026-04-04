@@ -21,12 +21,12 @@ export default async function SubmissionPage({ params }) {
     <main className="min-h-screen bg-white py-12">
       <div className="max-w-2xl mx-auto px-6 space-y-8">
         <div>
-          <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">
-            Submission
-          </p>
           <h1 className="text-2xl font-semibold text-gray-900">
-            {submission.filename}
+            Thank you for your submission
           </h1>
+          <p className="text-xs text-gray-400 mt-1">
+            {submission.filename}
+          </p>
           <p className="text-sm text-gray-500 mt-1">
             Contributed by {submission.contributor} · Status:{' '}
             {submission.status}
@@ -36,7 +36,7 @@ export default async function SubmissionPage({ params }) {
         {submission.note && (
           <div className="p-4 bg-gray-50 rounded border border-gray-200">
             <p className="text-xs font-medium text-gray-500 mb-1">
-              Contributor note
+              Your note
             </p>
             <p className="text-sm text-gray-700">{submission.note}</p>
           </div>
@@ -55,9 +55,19 @@ export default async function SubmissionPage({ params }) {
         </div>
 
         <div className="flex items-center justify-between">
-          <p className="text-xs text-gray-400">
-            Submission ID: {id}
-          </p>
+          <div className="space-y-1">
+            <p className="text-xs text-gray-400">
+              Submission ID: {id}
+            </p>
+            {submission.gcsUri && (
+              <a
+                href={`/api/download?submissionId=${id}`}
+                className="text-xs text-gray-700 underline hover:text-gray-900"
+              >
+                Download your recording &#8595;
+              </a>
+            )}
+          </div>
           <a
             href="/"
             className="text-xs text-gray-700 underline hover:text-gray-900"
