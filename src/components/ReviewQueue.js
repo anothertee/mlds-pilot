@@ -3,7 +3,12 @@
 import { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
 
-export default function ReviewQueue({ reviewerPassword }) {
+export default function ReviewQueue({
+  reviewerPassword,
+  status = 'auto_tagged',
+  onDecision,
+  readOnly = false,
+}) {
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -14,12 +19,13 @@ export default function ReviewQueue({ reviewerPassword }) {
 
   useEffect(() => {
     fetchSubmissions();
-  }, []);
+  }, [status]);
 
   async function fetchSubmissions() {
+    setLoading(true);
     try {
       const response = await fetch(
-        `/api/submissions?reviewerPassword=${reviewerPassword}`
+        `/api/submissions?reviewerPassword=${reviewerPassword}&status=${status}`
       );
 
       if (!response.ok) {
@@ -29,6 +35,7 @@ export default function ReviewQueue({ reviewerPassword }) {
       const data = await response.json();
       setSubmissions(data.submissions);
       logger.info('ReviewQueue', 'Queue loaded', {
+        status,
         count: data.submissions.length,
       });
     } catch (err) {
@@ -66,9 +73,8 @@ export default function ReviewQueue({ reviewerPassword }) {
         decision,
       });
 
-      setSubmissions((prev) =>
-        prev.filter((s) => s.id !== submissionId)
-      );
+      setSubmissions((prev) => prev.filter((s) => s.id !== submissionId));
+      if (onDecision) onDecision();
     } catch (err) {
       logger.error('ReviewQueue', 'Decision failed', { message: err.message });
       setError(err.message);
@@ -97,10 +103,7 @@ export default function ReviewQueue({ reviewerPassword }) {
       [submissionId]: { label: '', meaning: '' },
     }));
 
-    logger.info('ReviewQueue', 'Tag added', {
-      submissionId,
-      label: input.label,
-    });
+    logger.info('ReviewQueue', 'Tag added', { submissionId, label: input.label });
   }
 
   function removeTag(submissionId, index) {
@@ -112,9 +115,7 @@ export default function ReviewQueue({ reviewerPassword }) {
 
   if (loading) {
     return (
-      <p className="text-sm text-gray-500 animate-pulse">
-        Loading queue...
-      </p>
+      <p className="text-sm text-gray-500 animate-pulse">Loading...</p>
     );
   }
 
@@ -125,7 +126,7 @@ export default function ReviewQueue({ reviewerPassword }) {
   if (submissions.length === 0) {
     return (
       <p className="text-sm text-gray-500">
-        No submissions pending review.
+        No submissions with this status.
       </p>
     );
   }
@@ -139,9 +140,7 @@ export default function ReviewQueue({ reviewerPassword }) {
         >
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-xs text-gray-400 mb-0.5">
-                {submission.id}
-              </p>
+              <p className="text-xs text-gray-400 mb-0.5">{submission.id}</p>
               <p className="text-sm font-medium text-gray-900">
                 {submission.filename}
               </p>
@@ -182,123 +181,154 @@ export default function ReviewQueue({ reviewerPassword }) {
             </ul>
           </div>
 
-          <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">
-              Reviewer note (optional)
-            </label>
-            <textarea
-              value={notes[submission.id] || ''}
-              onChange={(e) =>
-                setNotes((prev) => ({
-                  ...prev,
-                  [submission.id]: e.target.value,
-                }))
-              }
-              placeholder="Add context or reason for decision..."
-              rows={2}
-              className="w-full border border-gray-200 rounded px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-gray-400"
-            />
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-medium text-gray-500">
-                Cultural annotations
-              </label>
-              <span className="text-xs text-gray-400">
-                {(tags[submission.id] || []).length}/5
-              </span>
-            </div>
-            <p className="text-xs text-gray-400 mb-2">
-              A useful tag names the specific tradition, gesture, or meaning.
-              For example: "Caribbean harvest gesture — welcoming abundance"
-              or "Yoruba greeting bow — showing respect to elders". Avoid
-              generic labels like "dance" or "movement".
-            </p>
-            <div className="space-y-2">
-              {(tags[submission.id] || []).map((tag, i) => (
-                <div key={i} className="flex items-center gap-2 p-2 bg-gray-50 rounded border border-gray-100">
-                  <div className="flex-1">
+          {readOnly && submission.humanTags?.length > 0 && (
+            <div>
+              <p className="text-xs font-medium text-gray-500 mb-2">
+                Community annotations
+              </p>
+              <ul className="space-y-2">
+                {submission.humanTags.map((tag, i) => (
+                  <li key={i} className="p-2 bg-gray-50 rounded border border-gray-100">
                     <p className="text-xs font-medium text-gray-700">{tag.label}</p>
                     {tag.meaning && (
-                      <p className="text-xs text-gray-400">{tag.meaning}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">{tag.meaning}</p>
                     )}
-                  </div>
-                  <button
-                    onClick={() => removeTag(submission.id, i)}
-                    className="text-xs text-gray-400 hover:text-red-500"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ))}
+                  </li>
+                ))}
+              </ul>
             </div>
-            {(tags[submission.id] || []).length < 5 && (
-              <div className="mt-2 space-y-1">
-                <input
-                  type="text"
-                  placeholder="Tag label e.g. Caribbean harvest gesture"
-                  value={tagInputs[submission.id]?.label || ''}
+          )}
+
+          {readOnly && submission.reviewerNote && (
+            <div className="p-3 bg-gray-50 rounded border border-gray-100">
+              <p className="text-xs font-medium text-gray-500 mb-1">
+                Reviewer note
+              </p>
+              <p className="text-xs text-gray-700">{submission.reviewerNote}</p>
+            </div>
+          )}
+
+          {!readOnly && (
+            <>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">
+                  Reviewer note (optional)
+                </label>
+                <textarea
+                  value={notes[submission.id] || ''}
                   onChange={(e) =>
-                    setTagInputs((prev) => ({
+                    setNotes((prev) => ({
                       ...prev,
-                      [submission.id]: {
-                        ...prev[submission.id],
-                        label: e.target.value,
-                      },
+                      [submission.id]: e.target.value,
                     }))
                   }
-                  className="w-full border border-gray-200 rounded px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-gray-400"
+                  placeholder="Add context or reason for decision..."
+                  rows={2}
+                  className="w-full border border-gray-200 rounded px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-gray-400"
                 />
-                <input
-                  type="text"
-                  placeholder="Meaning e.g. welcoming abundance from the earth"
-                  value={tagInputs[submission.id]?.meaning || ''}
-                  onChange={(e) =>
-                    setTagInputs((prev) => ({
-                      ...prev,
-                      [submission.id]: {
-                        ...prev[submission.id],
-                        meaning: e.target.value,
-                      },
-                    }))
-                  }
-                  className="w-full border border-gray-200 rounded px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-gray-400"
-                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-medium text-gray-500">
+                    Cultural annotations
+                  </label>
+                  <span className="text-xs text-gray-400">
+                    {(tags[submission.id] || []).length}/5
+                  </span>
+                </div>
+                <p className="text-xs text-gray-400 mb-2">
+                  A useful tag names the specific tradition, gesture, or meaning.
+                  For example: "Caribbean harvest gesture — welcoming abundance"
+                  or "Yoruba greeting bow — showing respect to elders". Avoid
+                  generic labels like "dance" or "movement".
+                </p>
+                <div className="space-y-2">
+                  {(tags[submission.id] || []).map((tag, i) => (
+                    <div key={i} className="flex items-center gap-2 p-2 bg-gray-50 rounded border border-gray-100">
+                      <div className="flex-1">
+                        <p className="text-xs font-medium text-gray-700">{tag.label}</p>
+                        {tag.meaning && (
+                          <p className="text-xs text-gray-400">{tag.meaning}</p>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => removeTag(submission.id, i)}
+                        className="text-xs text-gray-400 hover:text-red-500"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                {(tags[submission.id] || []).length < 5 && (
+                  <div className="mt-2 space-y-1">
+                    <input
+                      type="text"
+                      placeholder="Tag label e.g. Caribbean harvest gesture"
+                      value={tagInputs[submission.id]?.label || ''}
+                      onChange={(e) =>
+                        setTagInputs((prev) => ({
+                          ...prev,
+                          [submission.id]: {
+                            ...prev[submission.id],
+                            label: e.target.value,
+                          },
+                        }))
+                      }
+                      className="w-full border border-gray-200 rounded px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-gray-400"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Meaning e.g. welcoming abundance from the earth"
+                      value={tagInputs[submission.id]?.meaning || ''}
+                      onChange={(e) =>
+                        setTagInputs((prev) => ({
+                          ...prev,
+                          [submission.id]: {
+                            ...prev[submission.id],
+                            meaning: e.target.value,
+                          },
+                        }))
+                      }
+                      className="w-full border border-gray-200 rounded px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-gray-400"
+                    />
+                    <button
+                      onClick={() => addTag(submission.id)}
+                      disabled={!tagInputs[submission.id]?.label}
+                      className="w-full py-1.5 px-3 bg-gray-100 text-gray-700 text-xs font-medium rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      Add tag
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-2">
                 <button
-                  onClick={() => addTag(submission.id)}
-                  disabled={!tagInputs[submission.id]?.label}
-                  className="w-full py-1.5 px-3 bg-gray-100 text-gray-700 text-xs font-medium rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  onClick={() => handleDecision(submission.id, 'approved')}
+                  disabled={processing === submission.id}
+                  className="flex-1 py-2 px-3 bg-gray-900 text-white text-xs font-medium rounded hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  Add tag
+                  Approve
+                </button>
+                <button
+                  onClick={() => handleDecision(submission.id, 'restricted')}
+                  disabled={processing === submission.id}
+                  className="flex-1 py-2 px-3 bg-gray-100 text-gray-700 text-xs font-medium rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Restrict
+                </button>
+                <button
+                  onClick={() => handleDecision(submission.id, 'rejected')}
+                  disabled={processing === submission.id}
+                  className="flex-1 py-2 px-3 bg-white text-gray-500 text-xs font-medium rounded border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Reject
                 </button>
               </div>
-            )}
-          </div>
-
-          <div className="flex gap-2">
-            <button
-              onClick={() => handleDecision(submission.id, 'approved')}
-              disabled={processing === submission.id}
-              className="flex-1 py-2 px-3 bg-gray-900 text-white text-xs font-medium rounded hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              Approve
-            </button>
-            <button
-              onClick={() => handleDecision(submission.id, 'restricted')}
-              disabled={processing === submission.id}
-              className="flex-1 py-2 px-3 bg-gray-100 text-gray-700 text-xs font-medium rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              Restrict
-            </button>
-            <button
-              onClick={() => handleDecision(submission.id, 'rejected')}
-              disabled={processing === submission.id}
-              className="flex-1 py-2 px-3 bg-white text-gray-500 text-xs font-medium rounded border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              Reject
-            </button>
-          </div>
+            </>
+          )}
 
           <a
             href={`/submission/${submission.id}`}
