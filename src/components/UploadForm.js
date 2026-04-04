@@ -40,6 +40,16 @@ export default function UploadForm() {
       return;
     }
 
+    if (!contributor.trim()) {
+      setError('Please enter your name.');
+      return;
+    }
+
+    if (!note.trim()) {
+      setError('Please add a note about this movement.');
+      return;
+    }
+
     logger.info('UploadForm', 'Upload initiated', {
       filename: file.name,
       contributor: contributor || 'anonymous',
@@ -191,7 +201,7 @@ export default function UploadForm() {
                 <video
                   src={URL.createObjectURL(file)}
                   controls
-                  className="w-full rounded border border-gray-200"
+                  className="w-full rounded border border-gray-200 h-48 object-cover"
                 />
               </div>
             )}
@@ -208,7 +218,7 @@ export default function UploadForm() {
                 <video
                   src={URL.createObjectURL(file)}
                   controls
-                  className="w-full rounded border border-gray-200"
+                  className="w-full rounded border border-gray-200 h-48 object-cover"
                 />
                 <button
                   onClick={() => setFile(null)}
@@ -225,25 +235,25 @@ export default function UploadForm() {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Your name (optional)
+            Your name <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
             value={contributor}
             onChange={(e) => setContributor(e.target.value)}
-            placeholder="Anonymous"
+            placeholder="Enter your name"
             className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
           />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Note about this movement (optional)
+            Note about this movement <span className="text-red-500">*</span>
           </label>
           <textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder="What tradition does this belong to? What is the context?"
+            placeholder="Describe the tradition, context, and meaning of this movement. Be specific — this information will be reviewed by community members."
             rows={3}
             className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
           />
@@ -279,6 +289,7 @@ export default function UploadForm() {
             <p className="text-xs text-gray-500">
               Submission ID: {result.id}
             </p>
+            
             <a
               href={`/submission/${result.id}`}
               className="text-xs text-gray-700 underline hover:text-gray-900"

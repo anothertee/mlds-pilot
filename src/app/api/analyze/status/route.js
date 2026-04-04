@@ -89,7 +89,7 @@ export async function POST(request) {
         return true;
       })
       .sort((a, b) => b.score - a.score)
-      .slice(0, 10);
+      .slice(0, 20);
 
     logger.info('analyze/status', 'Labels extracted', {
       count: autoTags.length,

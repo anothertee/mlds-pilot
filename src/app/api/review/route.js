@@ -6,14 +6,12 @@ const VALID_STATUSES = ['approved', 'restricted', 'rejected'];
 
 export async function POST(request) {
   try {
-    const { submissionId, decision, note, reviewerPassword } = await request.json();
+    const { submissionId, decision, note, humanTags, reviewerPassword } =
+      await request.json();
 
     if (reviewerPassword !== process.env.REVIEWER_PASSWORD) {
       logger.warn('review', 'Unauthorised review attempt');
-      return Response.json(
-        { error: 'Unauthorised' },
-        { status: 401 }
-      );
+      return Response.json({ error: 'Unauthorised' }, { status: 401 });
     }
 
     if (!submissionId || !decision) {
@@ -33,11 +31,13 @@ export async function POST(request) {
     logger.info('review', 'Review decision received', {
       submissionId,
       decision,
+      humanTagCount: (humanTags || []).length,
     });
 
     await adminDb.collection('submissions').doc(submissionId).update({
       status: decision,
       reviewerNote: note || '',
+      humanTags: humanTags || [],
       reviewedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 

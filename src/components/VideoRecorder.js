@@ -161,7 +161,7 @@ export default function VideoRecorder({ onRecordingComplete }) {
               autoPlay
               muted
               playsInline
-              className="w-full rounded border border-gray-200 bg-gray-50"
+              className="w-full rounded border border-gray-200 bg-gray-50 h-48 object-cover"
             />
             {status === 'recording' && (
               <div className="absolute top-2 right-2 flex items-center gap-1.5 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">
@@ -200,7 +200,7 @@ export default function VideoRecorder({ onRecordingComplete }) {
             <video
               src={recordedURL}
               controls
-              className="w-full rounded border border-gray-200"
+              className="w-full rounded border border-gray-200 h-48 object-cover"
             />
           </div>
           <div className="flex gap-2">
