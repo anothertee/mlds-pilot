@@ -129,6 +129,7 @@ Visitor arrives at mlds-pilot.vercel.app
 → Welcome page explains the project
 → Facilitator enters password to unlock /upload
 → Visitor uploads a video file or records via webcam
+
 Upload pipeline (server-side)
 → Video sent to Next.js API route
 → Uploaded to Google Cloud Storage
@@ -137,6 +138,7 @@ Upload pipeline (server-side)
 → Labels written to Firestore: { status: "auto_tagged", autoTags: [...] }
 → Visitor sees submission page with auto-tags and QR code
 → Visitor scans QR code to save submission link to their phone
+
 Reviewer logs in at /review
 → Dashboard shows counts: submitted / pending / approved / restricted / rejected
 → Pending tab shows submissions awaiting review
@@ -144,6 +146,7 @@ Reviewer logs in at /review
 → Reviewer adds up to 5 cultural annotations (label + meaning)
 → Reviewer decides: Approve / Restrict / Reject
 → Firestore document updated with decision and human tags
+
 On approval
 → Submission page community says column populates
 → Annotation can be exported and ingested into The Repository
