@@ -2,6 +2,7 @@ import { adminDb } from '@/lib/firebaseAdmin';
 import TagDisplay from '@/components/TagDisplay';
 import QRCode from '@/components/QRCode';
 import InfoOverlay from '@/components/InfoOverlay';
+import ReviewerLink from '@/components/ReviewerLink';
 
 export default async function SubmissionPage({ params }) {
   const { id } = await params;
@@ -79,6 +80,7 @@ export default async function SubmissionPage({ params }) {
         </div>
       </main>
       <InfoOverlay dark={false} />
+      <ReviewerLink dark={false} />
     </>
   );
 }

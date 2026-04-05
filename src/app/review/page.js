@@ -115,7 +115,7 @@ export default function ReviewPage() {
             href="/"
             className="text-xs text-gray-400 hover:text-gray-600"
           >
-            &#8592; Back to upload
+            &#8592; Home
           </a>
         </div>
 
