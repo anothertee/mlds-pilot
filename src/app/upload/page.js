@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import UploadForm from '@/components/UploadForm';
 import InfoOverlay from '@/components/InfoOverlay';
+import ReviewerLink from '@/components/ReviewerLink';
+
 
 export default function UploadPage() {
   const [authenticated, setAuthenticated] = useState(false);
@@ -87,6 +89,7 @@ export default function UploadPage() {
         </div>
       </main>
       <InfoOverlay dark={false} />
+      <ReviewerLink dark={false} />
     </>
   );
 }
