@@ -83,6 +83,7 @@ base64 -i path/to/service-account.json
 ---
 
 ## Project Structure
+```
 mlds-pilot/
 ├── src/
 │   ├── app/
@@ -119,10 +120,11 @@ mlds-pilot/
 ├── .env.local                           # Local values (gitignored)
 ├── .gitignore
 └── README.md
-
+```
 ---
 
 ## How It Works
+```
 Visitor arrives at mlds-pilot.vercel.app
 → Welcome page explains the project
 → Facilitator enters password to unlock /upload
@@ -145,6 +147,7 @@ Reviewer logs in at /review
 On approval
 → Submission page community says column populates
 → Annotation can be exported and ingested into The Repository
+```
 
 ---
 
