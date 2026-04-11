@@ -5,11 +5,11 @@ import ReviewQueue from '@/components/ReviewQueue';
 import { logger } from '@/lib/logger';
 
 const TABS = [
-  { label: 'Pending', status: 'auto_tagged' },
-  { label: 'Approved', status: 'approved' },
-  { label: 'Restricted', status: 'restricted' },
-  { label: 'Rejected', status: 'rejected' },
-  { label: 'All', status: 'all' },
+  { label: 'Pending', status: 'auto_tagged', countKey: 'auto_tagged' },
+  { label: 'Approved', status: 'approved', countKey: 'approved' },
+  { label: 'Restricted', status: 'restricted', countKey: 'restricted' },
+  { label: 'Rejected', status: 'rejected', countKey: 'rejected' },
+  { label: 'All', status: 'all', countKey: null },
 ];
 
 export default function ReviewPage() {
@@ -68,7 +68,7 @@ export default function ReviewPage() {
 
   if (!authenticated) {
     return (
-      <main style={{ minHeight: '100vh', backgroundColor: 'var(--color-surface)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: '3rem' }}>
+      <main style={{ minHeight: '100vh', backgroundColor: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div className="max-w-sm w-full px-6 space-y-4">
           <h1 style={{ fontSize: '1.5rem', fontWeight: '600', color: 'var(--color-body)', fontFamily: 'var(--font-fraunces), serif', fontOpticalSizing: 'auto' }}>
             Reviewer access
@@ -132,27 +132,30 @@ export default function ReviewPage() {
   }
 
   return (
-    <main style={{ minHeight: '100vh', backgroundColor: 'var(--color-surface)' }} className="py-12">
-      <div className="max-w-3xl mx-auto px-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: '600', color: 'var(--color-body)', fontFamily: 'var(--font-fraunces), serif', fontOpticalSizing: 'auto' }}>
-              Review dashboard
-            </h1>
-            <p style={{ fontSize: '0.875rem', color: 'var(--color-secondary)', marginTop: '0.25rem' }}>
-              Community knowledge governance
-            </p>
-          </div>
+    <div style={{ display: 'flex', height: '100vh', backgroundColor: 'var(--color-surface)', overflow: 'hidden' }}>
 
-          <a
-            href="/"
-            style={{ fontSize: '0.75rem', color: 'var(--color-machine)', textDecoration: 'none' }}
-          >
-            &#8592; Home
-          </a>
+      {/* Sidebar */}
+      <aside style={{
+        width: '260px',
+        minWidth: '260px',
+        borderRight: '1px solid var(--color-border)',
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '2rem 1.5rem',
+        height: '100vh',
+        overflowY: 'auto',
+      }}>
+        <div style={{ marginBottom: '2rem' }}>
+          <h1 style={{ fontSize: '1.25rem', fontWeight: '600', color: 'var(--color-body)', fontFamily: 'var(--font-fraunces), serif', fontOpticalSizing: 'auto', lineHeight: '1.2', marginBottom: '0.375rem' }}>
+            Review dashboard
+          </h1>
+          <p style={{ fontSize: '0.75rem', color: 'var(--color-secondary)' }}>
+            Community knowledge governance
+          </p>
         </div>
 
-        <div className="grid grid-cols-5 gap-3">
+        {/* Stats */}
+        <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           {[
             { label: 'Submitted', key: 'submitted' },
             { label: 'Pending', key: 'auto_tagged' },
@@ -160,49 +163,77 @@ export default function ReviewPage() {
             { label: 'Restricted', key: 'restricted' },
             { label: 'Rejected', key: 'rejected' },
           ].map(({ label, key }) => (
-            <div
-              key={key}
-              style={{ border: '1px solid var(--color-border)', borderRadius: '2px', padding: '0.75rem', textAlign: 'center' }}
-            >
-              <p style={{ fontSize: '1.5rem', fontWeight: '600', color: 'var(--color-body)', fontFamily: 'var(--font-dm-mono), monospace' }}>
+            <div key={key} style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--color-secondary)', fontFamily: 'var(--font-dm-mono), monospace', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                {label}
+              </span>
+              <span style={{ fontSize: '1.125rem', fontWeight: '600', color: 'var(--color-body)', fontFamily: 'var(--font-dm-mono), monospace' }}>
                 {counts[key] ?? 0}
-              </p>
-              <p style={{ fontSize: '0.75rem', color: 'var(--color-machine)', marginTop: '0.125rem', fontFamily: 'var(--font-dm-mono), monospace' }}>{label}</p>
+              </span>
             </div>
           ))}
         </div>
 
-        <div style={{ borderBottom: '1px solid var(--color-border)' }}>
-          <div className="flex gap-0">
-            {TABS.map((tab) => (
-              <button
-                key={tab.status}
-                onClick={() => setActiveTab(tab.status)}
-                style={{
-                  padding: '0.5rem 1rem',
-                  fontSize: '0.875rem',
-                  fontWeight: '500',
-                  fontFamily: 'var(--font-dm-sans), Arial, sans-serif',
-                  cursor: 'pointer',
-                  border: 'none',
-                  borderBottom: activeTab === tab.status ? '2px solid var(--color-body)' : '2px solid transparent',
-                  background: activeTab === tab.status ? 'var(--color-body)' : 'transparent',
-                  color: activeTab === tab.status ? 'var(--color-surface)' : 'var(--color-secondary)',
-                }}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* Tab navigation */}
+        <nav style={{ borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+          {TABS.map((tab) => (
+            <button
+              key={tab.status}
+              onClick={() => setActiveTab(tab.status)}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '0.5rem 0.75rem',
+                fontSize: '0.875rem',
+                fontWeight: '500',
+                fontFamily: 'var(--font-dm-sans), Arial, sans-serif',
+                textAlign: 'left',
+                cursor: 'pointer',
+                border: activeTab === tab.status ? '1px solid var(--color-body)' : '1px solid transparent',
+                borderRadius: '2px',
+                backgroundColor: activeTab === tab.status ? 'var(--color-body)' : 'transparent',
+                color: activeTab === tab.status ? 'var(--color-surface)' : 'var(--color-secondary)',
+              }}
+            >
+              <span>{tab.label}</span>
+              {tab.countKey && counts[tab.countKey] !== undefined && (
+                <span style={{
+                  fontSize: '0.75rem',
+                  fontFamily: 'var(--font-dm-mono), monospace',
+                  opacity: 0.7,
+                }}>
+                  {counts[tab.countKey]}
+                </span>
+              )}
+            </button>
+          ))}
+        </nav>
 
+        {/* Home link */}
+        <div style={{ marginTop: 'auto', paddingTop: '2rem', borderTop: '1px solid var(--color-border)' }}>
+          <a
+            href="/"
+            style={{ fontSize: '0.75rem', color: 'var(--color-machine)', textDecoration: 'none', fontFamily: 'var(--font-dm-mono), monospace' }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-body)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-machine)'; }}
+          >
+            &#8592; Home
+          </a>
+        </div>
+      </aside>
+
+      {/* Main content */}
+      <main style={{ flex: 1, overflowY: 'auto', padding: '2rem 3rem' }}>
         <ReviewQueue
           reviewerPassword={password}
           status={activeTab}
           onDecision={refreshCounts}
           readOnly={activeTab !== 'auto_tagged'}
         />
-      </div>
-    </main>
+      </main>
+
+    </div>
   );
 }
