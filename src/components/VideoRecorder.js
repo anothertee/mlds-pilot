@@ -140,14 +140,39 @@ export default function VideoRecorder({ onRecordingComplete }) {
     return `${m}:${s}`;
   }
 
+  const outlinedBtnBase = {
+    width: '100%',
+    padding: '0.5rem 1rem',
+    fontSize: '0.875rem',
+    fontWeight: '500',
+    fontFamily: 'var(--font-dm-sans), Arial, sans-serif',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+    borderRadius: '2px',
+    cursor: 'pointer',
+    background: 'transparent',
+  };
+
   return (
     <div className="space-y-3">
-      {error && <p className="text-xs text-red-500">{error}</p>}
+      {error && <p style={{ fontSize: '0.75rem', color: 'var(--color-rejected)' }}>{error}</p>}
 
       {status === 'idle' && (
         <button
           onClick={startCamera}
-          className="w-full py-2 px-4 bg-gray-100 text-gray-700 text-sm font-medium rounded hover:bg-gray-200 transition-colors"
+          style={{
+            ...outlinedBtnBase,
+            border: '1.5px solid var(--color-body)',
+            color: 'var(--color-body)',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--color-body)';
+            e.currentTarget.style.color = 'var(--color-surface)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.color = 'var(--color-body)';
+          }}
         >
           Enable camera
         </button>
@@ -155,17 +180,17 @@ export default function VideoRecorder({ onRecordingComplete }) {
 
       {(status === 'ready' || status === 'recording') && (
         <div className="space-y-3">
-          <div className="relative">
+          <div style={{ position: 'relative' }}>
             <video
               ref={videoCallbackRef}
               autoPlay
               muted
               playsInline
-              className="w-full rounded border border-gray-200 bg-gray-50 h-48 object-cover"
+              style={{ width: '100%', border: '1px solid var(--color-border)', borderRadius: '2px', backgroundColor: 'var(--color-border)', height: '12rem', objectFit: 'cover' }}
             />
             {status === 'recording' && (
-              <div className="absolute top-2 right-2 flex items-center gap-1.5 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">
-                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+              <div style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.375rem', backgroundColor: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: '0.75rem', padding: '0.25rem 0.5rem', borderRadius: '2px', fontFamily: 'var(--font-dm-mono), monospace' }}>
+                <span style={{ width: '0.5rem', height: '0.5rem', borderRadius: '50%', backgroundColor: 'var(--color-rejected)', display: 'inline-block', animation: 'breathe 1.5s ease-in-out infinite' }} />
                 {formatDuration(duration)}
               </div>
             )}
@@ -174,7 +199,19 @@ export default function VideoRecorder({ onRecordingComplete }) {
           {status === 'ready' && (
             <button
               onClick={startRecording}
-              className="w-full py-2 px-4 bg-gray-900 text-white text-sm font-medium rounded hover:bg-gray-700 transition-colors"
+              style={{
+                ...outlinedBtnBase,
+                border: '1.5px solid var(--color-body)',
+                color: 'var(--color-body)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--color-body)';
+                e.currentTarget.style.color = 'var(--color-surface)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = 'var(--color-body)';
+              }}
             >
               Start recording
             </button>
@@ -183,7 +220,19 @@ export default function VideoRecorder({ onRecordingComplete }) {
           {status === 'recording' && (
             <button
               onClick={stopRecording}
-              className="w-full py-2 px-4 bg-red-600 text-white text-sm font-medium rounded hover:bg-red-700 transition-colors"
+              style={{
+                ...outlinedBtnBase,
+                border: '1.5px solid var(--color-rejected)',
+                color: 'var(--color-rejected)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--color-rejected)';
+                e.currentTarget.style.color = 'var(--color-surface)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = 'var(--color-rejected)';
+              }}
             >
               Stop recording
             </button>
@@ -194,25 +243,53 @@ export default function VideoRecorder({ onRecordingComplete }) {
       {status === 'preview' && recordedURL && (
         <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: 'var(--color-body)', marginBottom: '0.25rem' }}>
               Preview
             </label>
             <video
               src={recordedURL}
               controls
-              className="w-full rounded border border-gray-200 h-48 object-cover"
+              style={{ width: '100%', border: '1px solid var(--color-border)', borderRadius: '2px', height: '12rem', objectFit: 'cover' }}
             />
           </div>
           <div className="flex gap-2">
             <button
               onClick={retake}
-              className="flex-1 py-2 px-4 bg-gray-100 text-gray-700 text-sm font-medium rounded hover:bg-gray-200 transition-colors"
+              style={{
+                ...outlinedBtnBase,
+                flex: 1,
+                border: '1.5px solid var(--color-border)',
+                color: 'var(--color-secondary)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--color-body)';
+                e.currentTarget.style.color = 'var(--color-surface)';
+                e.currentTarget.style.borderColor = 'var(--color-body)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = 'var(--color-secondary)';
+                e.currentTarget.style.borderColor = 'var(--color-border)';
+              }}
             >
               Retake
             </button>
             <button
               onClick={useRecording}
-              className="flex-1 py-2 px-4 bg-gray-900 text-white text-sm font-medium rounded hover:bg-gray-700 transition-colors"
+              style={{
+                ...outlinedBtnBase,
+                flex: 1,
+                border: '1.5px solid var(--color-body)',
+                color: 'var(--color-body)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--color-body)';
+                e.currentTarget.style.color = 'var(--color-surface)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = 'var(--color-body)';
+              }}
             >
               Use this recording
             </button>

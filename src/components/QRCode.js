@@ -5,7 +5,10 @@ import { QRCodeSVG } from 'qrcode.react';
 export default function QRCode({ url }) {
   return (
     <div className="flex flex-col items-center space-y-3">
-      <div className="p-4 border border-gray-200 rounded-lg bg-white">
+      <div
+        className="state-surface"
+        style={{ padding: '1rem', border: '1px solid var(--color-border)', borderRadius: '2px', backgroundColor: '#ffffff' }}
+      >
         <QRCodeSVG
           value={url}
           size={180}
@@ -14,7 +17,7 @@ export default function QRCode({ url }) {
           level="M"
         />
       </div>
-      <p className="text-xs text-gray-500 text-center">
+      <p style={{ fontSize: '0.75rem', color: 'var(--color-secondary)', textAlign: 'center' }}>
         Scan to save this submission to your phone
       </p>
     </div>

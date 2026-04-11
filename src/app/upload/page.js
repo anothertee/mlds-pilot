@@ -51,12 +51,12 @@ export default function UploadPage() {
 
   if (!authenticated) {
     return (
-      <main className="min-h-screen bg-white flex items-center justify-center">
+      <main style={{ minHeight: '100vh', backgroundColor: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div className="max-w-sm w-full px-6 space-y-4">
-          <h1 className="text-2xl font-semibold text-gray-900">
+          <h1 style={{ fontSize: '1.5rem', fontWeight: '600', color: 'var(--color-body)', fontFamily: 'var(--font-fraunces), serif', fontOpticalSizing: 'auto' }}>
             Facilitator access
           </h1>
-          <p className="text-sm text-gray-500">
+          <p style={{ fontSize: '0.875rem', color: 'var(--color-secondary)' }}>
             Enter the installation password to begin.
           </p>
           <div className="space-y-3">
@@ -66,12 +66,45 @@ export default function UploadPage() {
               onChange={(e) => setPassword(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
               placeholder="Password"
-              className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+              style={{
+                width: '100%',
+                border: '1px solid var(--color-border)',
+                borderRadius: '2px',
+                padding: '0.625rem 0.75rem',
+                fontSize: '0.875rem',
+                background: 'transparent',
+                color: 'var(--color-body)',
+                outline: 'none',
+                fontFamily: 'var(--font-dm-sans), Arial, sans-serif',
+              }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--color-body)'; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; }}
             />
-            {error && <p className="text-xs text-red-500">{error}</p>}
+            {error && <p style={{ fontSize: '0.75rem', color: 'var(--color-rejected)' }}>{error}</p>}
             <button
               onClick={handleLogin}
-              className="w-full py-2 px-4 bg-gray-900 text-white text-sm font-medium rounded hover:bg-gray-700 transition-colors"
+              style={{
+                width: '100%',
+                padding: '0.625rem 1rem',
+                backgroundColor: 'transparent',
+                color: 'var(--color-body)',
+                fontSize: '0.875rem',
+                fontWeight: '500',
+                fontFamily: 'var(--font-dm-sans), Arial, sans-serif',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                border: '1.5px solid var(--color-body)',
+                borderRadius: '2px',
+                cursor: 'pointer',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--color-body)';
+                e.currentTarget.style.color = 'var(--color-surface)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = 'var(--color-body)';
+              }}
             >
               Enter
             </button>
@@ -83,7 +116,7 @@ export default function UploadPage() {
 
   return (
     <>
-      <main className="min-h-screen bg-white py-12">
+      <main style={{ minHeight: '100vh', backgroundColor: 'var(--color-surface)' }} className="py-12">
         <div className="max-w-xl mx-auto px-6">
           <UploadForm />
         </div>
