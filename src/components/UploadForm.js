@@ -16,6 +16,7 @@ export default function UploadForm() {
   const [fileURL, setFileURL] = useState(null);
   const [logs, setLogs] = useState([]);
   const logsEndRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     logsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -257,11 +258,39 @@ export default function UploadForm() {
               Video file
             </label>
             <input
+              ref={fileInputRef}
               type="file"
               accept="video/*"
               onChange={handleFileChange}
-              style={{ display: 'block', width: '100%', fontSize: '0.875rem', color: 'var(--color-secondary)', cursor: 'pointer' }}
+              style={{ display: 'none' }}
             />
+            <button
+              onClick={() => fileInputRef.current.click()}
+              disabled={isProcessing}
+              style={{
+                padding: '0.5rem 1rem',
+                fontSize: '0.875rem',
+                fontWeight: '500',
+                fontFamily: 'var(--font-dm-sans), Arial, sans-serif',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                border: '1.5px solid var(--color-body)',
+                borderRadius: '2px',
+                background: 'transparent',
+                color: 'var(--color-body)',
+                cursor: 'pointer',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--color-body)';
+                e.currentTarget.style.color = 'var(--color-surface)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = 'var(--color-body)';
+              }}
+            >
+              Choose file
+            </button>
           </div>
         )}
 
