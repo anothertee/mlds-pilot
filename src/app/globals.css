@@ -59,3 +59,12 @@ body {
 .state-surface {
   animation: surface 4s ease-in-out infinite;
 }
+
+@keyframes progress-slide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
+}
+
+.state-analyzing {
+  animation: progress-slide 1.6s ease-in-out infinite;
+}

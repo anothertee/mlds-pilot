@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
+import TagDisplay from '@/components/TagDisplay';
 
 export default function ReviewQueue({
   reviewerPassword,
@@ -16,9 +17,11 @@ export default function ReviewQueue({
   const [notes, setNotes] = useState({});
   const [tags, setTags] = useState({});
   const [tagInputs, setTagInputs] = useState({});
+  const [detailSubmission, setDetailSubmission] = useState(null);
 
   useEffect(() => {
     fetchSubmissions();
+    setDetailSubmission(null);
   }, [status]);
 
   async function fetchSubmissions() {
@@ -74,6 +77,7 @@ export default function ReviewQueue({
       });
 
       setSubmissions((prev) => prev.filter((s) => s.id !== submissionId));
+      setDetailSubmission(null);
       if (onDecision) onDecision();
     } catch (err) {
       logger.error('ReviewQueue', 'Decision failed', { message: err.message });
@@ -125,6 +129,16 @@ export default function ReviewQueue({
     fontFamily: 'var(--font-dm-sans), Arial, sans-serif',
   };
 
+  function statusColor(s) {
+    switch (s) {
+      case 'approved': return 'var(--color-approved)';
+      case 'rejected': return 'var(--color-rejected)';
+      case 'restricted':
+      case 'auto_tagged': return 'var(--color-accent)';
+      default: return 'var(--color-machine)';
+    }
+  }
+
   if (loading) {
     return (
       <p className="state-breathing" style={{ fontSize: '0.875rem', color: 'var(--color-secondary)', fontFamily: 'var(--font-dm-mono), monospace' }}>Loading...</p>
@@ -143,6 +157,233 @@ export default function ReviewQueue({
     );
   }
 
+  // — Detail view —
+  if (detailSubmission) {
+    const s = detailSubmission;
+    const isProcessingDetail = processing === s.id;
+
+    return (
+      <div className="page-enter" style={{ maxWidth: '640px' }}>
+
+        {/* Back + ID row */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+          <button
+            onClick={() => setDetailSubmission(null)}
+            style={{ fontSize: '0.75rem', fontFamily: 'var(--font-dm-mono), monospace', color: 'var(--color-secondary)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, letterSpacing: '0.05em' }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-body)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-secondary)'; }}
+          >
+            &#8592; Back to queue
+          </button>
+          <span style={{ fontSize: '0.75rem', color: 'var(--color-machine)', fontFamily: 'var(--font-dm-mono), monospace' }}>
+            {s.id}
+          </span>
+        </div>
+
+        {/* Header */}
+        <div style={{ marginBottom: '1.5rem' }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: '600', color: 'var(--color-body)', fontFamily: 'var(--font-fraunces), serif', fontOpticalSizing: 'auto', marginBottom: '0.5rem' }}>
+            {s.filename}
+          </h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <p style={{ fontSize: '0.875rem', color: 'var(--color-secondary)' }}>
+              {s.contributor} · {s.createdAt ? new Date(s.createdAt).toLocaleDateString() : 'Unknown date'}
+            </p>
+            <span style={{
+              fontSize: '0.75rem',
+              fontFamily: 'var(--font-dm-mono), monospace',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              border: `1px solid ${statusColor(s.status)}`,
+              borderRadius: '2px',
+              padding: '0.125rem 0.5rem',
+              color: statusColor(s.status),
+              background: 'transparent',
+            }}>
+              {s.status}
+            </span>
+          </div>
+        </div>
+
+        {/* Contributor note */}
+        {s.note && (
+          <div style={{ padding: '0.875rem', border: '1px solid var(--color-border)', borderRadius: '2px', marginBottom: '1.5rem' }}>
+            <p style={{ fontSize: '0.75rem', fontWeight: '500', color: 'var(--color-secondary)', marginBottom: '0.375rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'var(--font-dm-mono), monospace' }}>
+              Contributor note
+            </p>
+            <p style={{ fontSize: '0.875rem', color: 'var(--color-body)', lineHeight: '1.6' }}>{s.note}</p>
+          </div>
+        )}
+
+        {/* Machine vs Community tags */}
+        <div style={{ marginBottom: '1.5rem' }}>
+          <TagDisplay
+            autoTags={s.autoTags || []}
+            humanTags={readOnly ? (s.humanTags || []) : (tags[s.id] || [])}
+          />
+        </div>
+
+        {/* Reviewer note — read-only tabs */}
+        {readOnly && s.reviewerNote && (
+          <div style={{ padding: '0.875rem', border: '1px solid var(--color-border)', borderRadius: '2px', marginBottom: '1.5rem' }}>
+            <p style={{ fontSize: '0.75rem', fontWeight: '500', color: 'var(--color-secondary)', marginBottom: '0.375rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'var(--font-dm-mono), monospace' }}>
+              Reviewer note
+            </p>
+            <p style={{ fontSize: '0.875rem', color: 'var(--color-body)', lineHeight: '1.6' }}>{s.reviewerNote}</p>
+          </div>
+        )}
+
+        {/* Review form — pending tab */}
+        {!readOnly && (
+          <>
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '500', color: 'var(--color-secondary)', marginBottom: '0.25rem' }}>
+                Reviewer note (optional)
+              </label>
+              <textarea
+                value={notes[s.id] || ''}
+                onChange={(e) => setNotes((prev) => ({ ...prev, [s.id]: e.target.value }))}
+                placeholder="Add context or reason for decision..."
+                rows={2}
+                style={inputStyle}
+                onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--color-body)'; }}
+                onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '1.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: '500', color: 'var(--color-secondary)' }}>
+                  Cultural annotations
+                </label>
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-machine)', fontFamily: 'var(--font-dm-mono), monospace' }}>
+                  {(tags[s.id] || []).length}/5
+                </span>
+              </div>
+              <p style={{ fontSize: '0.75rem', color: 'var(--color-secondary)', marginBottom: '0.5rem', lineHeight: '1.5' }}>
+                A useful tag names the specific tradition, gesture, or meaning — e.g. "Caribbean harvest gesture — welcoming abundance".
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                {(tags[s.id] || []).map((tag, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem', border: '1px solid var(--color-community)', borderRadius: '2px' }}>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontSize: '0.75rem', fontWeight: '500', color: 'var(--color-community)', fontFamily: 'var(--font-dm-mono), monospace', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{tag.label}</p>
+                      {tag.meaning && <p style={{ fontSize: '0.75rem', color: 'var(--color-secondary)', marginTop: '0.125rem' }}>{tag.meaning}</p>}
+                    </div>
+                    <button
+                      onClick={() => removeTag(s.id, i)}
+                      style={{ fontSize: '0.75rem', color: 'var(--color-machine)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                      onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-rejected)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-machine)'; }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+              {(tags[s.id] || []).length < 5 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <input
+                    type="text"
+                    placeholder="Tag label e.g. Caribbean harvest gesture"
+                    value={tagInputs[s.id]?.label || ''}
+                    onChange={(e) => setTagInputs((prev) => ({ ...prev, [s.id]: { ...prev[s.id], label: e.target.value } }))}
+                    style={inputStyle}
+                    onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--color-body)'; }}
+                    onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; }}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Meaning e.g. welcoming abundance from the earth"
+                    value={tagInputs[s.id]?.meaning || ''}
+                    onChange={(e) => setTagInputs((prev) => ({ ...prev, [s.id]: { ...prev[s.id], meaning: e.target.value } }))}
+                    style={inputStyle}
+                    onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--color-body)'; }}
+                    onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; }}
+                  />
+                  <button
+                    onClick={() => addTag(s.id)}
+                    disabled={!tagInputs[s.id]?.label}
+                    style={{
+                      width: '100%',
+                      padding: '0.375rem 0.75rem',
+                      fontSize: '0.75rem',
+                      fontWeight: '500',
+                      fontFamily: 'var(--font-dm-sans), Arial, sans-serif',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      border: '1.5px solid var(--color-community)',
+                      borderRadius: '2px',
+                      background: 'transparent',
+                      color: 'var(--color-community)',
+                      cursor: !tagInputs[s.id]?.label ? 'not-allowed' : 'pointer',
+                      opacity: !tagInputs[s.id]?.label ? 0.4 : 1,
+                    }}
+                    onMouseEnter={(e) => {
+                      if (tagInputs[s.id]?.label) {
+                        e.currentTarget.style.backgroundColor = 'var(--color-community)';
+                        e.currentTarget.style.color = 'var(--color-surface)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                      e.currentTarget.style.color = 'var(--color-community)';
+                    }}
+                  >
+                    Add tag
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Decision buttons */}
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              {[
+                { label: 'Approve', decision: 'approved', color: 'var(--color-approved)', textOnFill: 'var(--color-ink)' },
+                { label: 'Restrict', decision: 'restricted', color: 'var(--color-accent)', textOnFill: 'var(--color-surface)' },
+                { label: 'Reject', decision: 'rejected', color: 'var(--color-rejected)', textOnFill: 'var(--color-surface)' },
+              ].map(({ label, decision, color, textOnFill }) => (
+                <button
+                  key={decision}
+                  onClick={() => handleDecision(s.id, decision)}
+                  disabled={isProcessingDetail}
+                  style={{
+                    flex: 1,
+                    padding: '0.625rem 0.75rem',
+                    fontSize: '0.75rem',
+                    fontWeight: '500',
+                    fontFamily: 'var(--font-dm-sans), Arial, sans-serif',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    border: `1.5px solid ${color}`,
+                    borderRadius: '2px',
+                    background: 'transparent',
+                    color: color,
+                    cursor: isProcessingDetail ? 'not-allowed' : 'pointer',
+                    opacity: isProcessingDetail ? 0.4 : 1,
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isProcessingDetail) {
+                      e.currentTarget.style.backgroundColor = color;
+                      e.currentTarget.style.color = textOnFill;
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.color = color;
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
+
+  // — Queue list —
   return (
     <div className="space-y-6">
       {submissions.map((submission) => (
@@ -169,10 +410,10 @@ export default function ReviewQueue({
               fontFamily: 'var(--font-dm-mono), monospace',
               textTransform: 'uppercase',
               letterSpacing: '0.08em',
-              border: '1px solid var(--color-machine)',
+              border: `1px solid ${statusColor(submission.status)}`,
               borderRadius: '2px',
               padding: '0.25rem 0.5rem',
-              color: 'var(--color-machine)',
+              color: statusColor(submission.status),
               background: 'transparent',
             }}>
               {submission.status}
@@ -466,14 +707,14 @@ export default function ReviewQueue({
             </>
           )}
 
-          <a
-            href={`/submission/${submission.id}`}
-            style={{ display: 'block', fontSize: '0.75rem', color: 'var(--color-machine)', textDecoration: 'none' }}
+          <button
+            onClick={() => setDetailSubmission(submission)}
+            style={{ display: 'block', fontSize: '0.75rem', color: 'var(--color-machine)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-dm-mono), monospace' }}
             onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-body)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-machine)'; }}
           >
             View full submission &#8594;
-          </a>
+          </button>
         </div>
       ))}
     </div>

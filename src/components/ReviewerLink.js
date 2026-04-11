@@ -1,3 +1,5 @@
+'use client';
+
 export default function ReviewerLink({ dark = false }) {
   const baseStyle = {
     position: 'fixed',

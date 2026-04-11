@@ -116,11 +116,7 @@ export default function UploadPage() {
 
   return (
     <>
-      <main style={{ minHeight: '100vh', backgroundColor: 'var(--color-surface)' }} className="py-12">
-        <div className="max-w-xl mx-auto px-6">
-          <UploadForm />
-        </div>
-      </main>
+      <UploadForm />
       <InfoOverlay dark={false} />
       <ReviewerLink dark={false} />
     </>

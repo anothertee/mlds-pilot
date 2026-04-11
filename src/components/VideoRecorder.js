@@ -141,8 +141,7 @@ export default function VideoRecorder({ onRecordingComplete }) {
   }
 
   const outlinedBtnBase = {
-    width: '100%',
-    padding: '0.5rem 1rem',
+    padding: '0.625rem 1.5rem',
     fontSize: '0.875rem',
     fontWeight: '500',
     fontFamily: 'var(--font-dm-sans), Arial, sans-serif',
@@ -154,105 +153,127 @@ export default function VideoRecorder({ onRecordingComplete }) {
   };
 
   return (
-    <div className="space-y-3">
-      {error && <p style={{ fontSize: '0.75rem', color: 'var(--color-rejected)' }}>{error}</p>}
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 
-      {status === 'idle' && (
-        <button
-          onClick={startCamera}
-          style={{
-            ...outlinedBtnBase,
-            border: '1.5px solid var(--color-body)',
-            color: 'var(--color-body)',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--color-body)';
-            e.currentTarget.style.color = 'var(--color-surface)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-            e.currentTarget.style.color = 'var(--color-body)';
-          }}
-        >
-          Enable camera
-        </button>
+      {error && (
+        <p style={{ fontSize: '0.75rem', color: 'var(--color-rejected)', flexShrink: 0 }}>{error}</p>
       )}
 
+      {/* Idle — camera not enabled */}
+      {status === 'idle' && (
+        <div style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          border: '1px solid var(--color-border)',
+          borderRadius: '2px',
+          gap: '1.5rem',
+        }}>
+          <p style={{ fontSize: '0.875rem', color: 'var(--color-machine)', fontFamily: 'var(--font-dm-mono), monospace' }}>
+            Camera not enabled
+          </p>
+          <button
+            onClick={startCamera}
+            style={{
+              ...outlinedBtnBase,
+              border: '1.5px solid var(--color-body)',
+              color: 'var(--color-body)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--color-body)';
+              e.currentTarget.style.color = 'var(--color-surface)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.color = 'var(--color-body)';
+            }}
+          >
+            Enable camera
+          </button>
+        </div>
+      )}
+
+      {/* Ready / Recording — live feed */}
       {(status === 'ready' || status === 'recording') && (
-        <div className="space-y-3">
-          <div style={{ position: 'relative' }}>
+        <>
+          <div style={{ flex: 1, position: 'relative', overflow: 'hidden', borderRadius: '2px' }}>
             <video
               ref={videoCallbackRef}
               autoPlay
               muted
               playsInline
-              style={{ width: '100%', border: '1px solid var(--color-border)', borderRadius: '2px', backgroundColor: 'var(--color-border)', height: '12rem', objectFit: 'cover' }}
+              style={{ width: '100%', height: '100%', objectFit: 'cover', border: '1px solid var(--color-border)', borderRadius: '2px', backgroundColor: '#000', display: 'block' }}
             />
             {status === 'recording' && (
-              <div style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.375rem', backgroundColor: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: '0.75rem', padding: '0.25rem 0.5rem', borderRadius: '2px', fontFamily: 'var(--font-dm-mono), monospace' }}>
+              <div style={{ position: 'absolute', top: '1rem', right: '1rem', display: 'flex', alignItems: 'center', gap: '0.375rem', backgroundColor: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: '0.75rem', padding: '0.375rem 0.625rem', borderRadius: '2px', fontFamily: 'var(--font-dm-mono), monospace' }}>
                 <span style={{ width: '0.5rem', height: '0.5rem', borderRadius: '50%', backgroundColor: 'var(--color-rejected)', display: 'inline-block', animation: 'breathe 1.5s ease-in-out infinite' }} />
                 {formatDuration(duration)}
               </div>
             )}
           </div>
 
-          {status === 'ready' && (
-            <button
-              onClick={startRecording}
-              style={{
-                ...outlinedBtnBase,
-                border: '1.5px solid var(--color-body)',
-                color: 'var(--color-body)',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--color-body)';
-                e.currentTarget.style.color = 'var(--color-surface)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.color = 'var(--color-body)';
-              }}
-            >
-              Start recording
-            </button>
-          )}
+          <div style={{ flexShrink: 0 }}>
+            {status === 'ready' && (
+              <button
+                onClick={startRecording}
+                style={{
+                  ...outlinedBtnBase,
+                  width: '100%',
+                  border: '1.5px solid var(--color-body)',
+                  color: 'var(--color-body)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--color-body)';
+                  e.currentTarget.style.color = 'var(--color-surface)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = 'var(--color-body)';
+                }}
+              >
+                Start recording
+              </button>
+            )}
 
-          {status === 'recording' && (
-            <button
-              onClick={stopRecording}
-              style={{
-                ...outlinedBtnBase,
-                border: '1.5px solid var(--color-rejected)',
-                color: 'var(--color-rejected)',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--color-rejected)';
-                e.currentTarget.style.color = 'var(--color-surface)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.color = 'var(--color-rejected)';
-              }}
-            >
-              Stop recording
-            </button>
-          )}
-        </div>
+            {status === 'recording' && (
+              <button
+                onClick={stopRecording}
+                style={{
+                  ...outlinedBtnBase,
+                  width: '100%',
+                  border: '1.5px solid var(--color-rejected)',
+                  color: 'var(--color-rejected)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--color-rejected)';
+                  e.currentTarget.style.color = 'var(--color-surface)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = 'var(--color-rejected)';
+                }}
+              >
+                Stop recording
+              </button>
+            )}
+          </div>
+        </>
       )}
 
+      {/* Preview — recorded clip */}
       {status === 'preview' && recordedURL && (
-        <div className="space-y-3">
-          <div>
-            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: 'var(--color-body)', marginBottom: '0.25rem' }}>
-              Preview
-            </label>
+        <>
+          <div style={{ flex: 1, position: 'relative', overflow: 'hidden', borderRadius: '2px' }}>
             <video
               src={recordedURL}
               controls
-              style={{ width: '100%', border: '1px solid var(--color-border)', borderRadius: '2px', height: '12rem', objectFit: 'cover' }}
+              style={{ width: '100%', height: '100%', objectFit: 'contain', border: '1px solid var(--color-border)', borderRadius: '2px', backgroundColor: '#000', display: 'block' }}
             />
           </div>
-          <div className="flex gap-2">
+
+          <div style={{ flexShrink: 0, display: 'flex', gap: '0.75rem' }}>
             <button
               onClick={retake}
               style={{
@@ -294,7 +315,7 @@ export default function VideoRecorder({ onRecordingComplete }) {
               Use this recording
             </button>
           </div>
-        </div>
+        </>
       )}
     </div>
   );
