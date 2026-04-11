@@ -170,6 +170,7 @@ export default function UploadForm() {
   };
 
   return (
+    <>
     <div style={{ display: 'flex', height: '100vh', backgroundColor: 'var(--color-surface)', overflow: 'hidden' }}>
 
       {/* Left panel — form controls */}
@@ -290,35 +291,18 @@ export default function UploadForm() {
 
         {/* Analysing */}
         {status === 'analyzing' && (
-          <div style={{ padding: '0.75rem', border: '1px solid var(--color-border)', borderRadius: '2px' }}>
-            <p className="state-breathing" style={{ fontSize: '0.875rem', color: 'var(--color-secondary)' }}>
-              Analysing movement... this may take 20-30 seconds.
-            </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+              <p style={{ fontSize: '0.875rem', color: 'var(--color-secondary)' }}>Analysing movement...</p>
+              <p style={{ fontSize: '0.75rem', color: 'var(--color-machine)', fontFamily: 'var(--font-dm-mono), monospace' }}>20–30s</p>
+            </div>
+            <div style={{ width: '100%', height: '2px', backgroundColor: 'var(--color-border)', borderRadius: '2px', overflow: 'hidden' }}>
+              <div className="state-analyzing" style={{ width: '25%', height: '100%', backgroundColor: 'var(--color-body)', borderRadius: '2px' }} />
+            </div>
           </div>
         )}
 
         {error && <p style={{ fontSize: '0.875rem', color: 'var(--color-rejected)' }}>{error}</p>}
-
-        {/* Success */}
-        {status === 'success' && result && (
-          <div className="page-enter" style={{ padding: '0.75rem', border: '1px solid var(--color-border)', borderRadius: '2px' }}>
-            <p style={{ fontSize: '0.875rem', fontWeight: '500', color: 'var(--color-body)', marginBottom: '0.375rem' }}>
-              Upload complete
-            </p>
-            <p style={{ fontSize: '0.75rem', color: 'var(--color-secondary)', fontFamily: 'var(--font-dm-mono), monospace', marginBottom: '0.375rem' }}>
-              Submission ID: {result.id}
-            </p>
-            <a
-              href={`/submission/${result.id}`}
-              style={{ fontSize: '0.75rem', color: 'var(--color-body)', textDecoration: 'underline', display: 'block', marginBottom: '0.375rem' }}
-            >
-              View submission &#8594;
-            </a>
-            <p style={{ fontSize: '0.75rem', color: 'var(--color-secondary)' }}>
-              Your video has been submitted for community review.
-            </p>
-          </div>
-        )}
 
         {/* Upload button — pinned to bottom */}
         <div style={{ marginTop: 'auto', paddingTop: '1rem' }}>
@@ -409,5 +393,73 @@ export default function UploadForm() {
 
       </main>
     </div>
+
+    {/* Success popup */}
+    {status === 'success' && result && (
+      <div
+        className="page-enter"
+        style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(18, 16, 14, 0.7)',
+          zIndex: 200,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '1.5rem',
+        }}
+      >
+        <div style={{
+          backgroundColor: 'var(--color-surface)',
+          border: '1px solid var(--color-border)',
+          borderRadius: '2px',
+          padding: '2rem',
+          maxWidth: '22rem',
+          width: '100%',
+        }}>
+          <p style={{ fontSize: '0.75rem', fontFamily: 'var(--font-dm-mono), monospace', color: 'var(--color-machine)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.75rem' }}>
+            Complete
+          </p>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: '600', color: 'var(--color-body)', fontFamily: 'var(--font-fraunces), serif', fontOpticalSizing: 'auto', marginBottom: '0.5rem' }}>
+            Submission received
+          </h2>
+          <p style={{ fontSize: '0.875rem', color: 'var(--color-secondary)', lineHeight: '1.6', marginBottom: '1.25rem' }}>
+            Your video has been submitted for community review.
+          </p>
+          <p style={{ fontSize: '0.75rem', color: 'var(--color-machine)', fontFamily: 'var(--font-dm-mono), monospace', marginBottom: '1.5rem' }}>
+            ID: {result.id}
+          </p>
+          <a
+            href={`/submission/${result.id}`}
+            style={{
+              display: 'block',
+              textAlign: 'center',
+              padding: '0.625rem 1rem',
+              backgroundColor: 'transparent',
+              color: 'var(--color-body)',
+              fontSize: '0.875rem',
+              fontWeight: '500',
+              fontFamily: 'var(--font-dm-sans), Arial, sans-serif',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              border: '1.5px solid var(--color-body)',
+              borderRadius: '2px',
+              textDecoration: 'none',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--color-body)';
+              e.currentTarget.style.color = 'var(--color-surface)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.color = 'var(--color-body)';
+            }}
+          >
+            View submission &#8594;
+          </a>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
