@@ -83,7 +83,19 @@ export default async function SubmissionPage({ params }) {
 
             <a
               href="/upload"
-              style={{ fontSize: '0.75rem', color: 'var(--color-body)', textDecoration: 'underline' }}
+              style={{
+                fontSize: '0.875rem',
+                fontWeight: '500',
+                fontFamily: 'var(--font-dm-sans), Arial, sans-serif',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                textDecoration: 'none',
+                color: 'var(--color-body)',
+                border: '1.5px solid var(--color-body)',
+                borderRadius: '2px',
+                padding: '0.5rem 1rem',
+                display: 'inline-block',
+              }}
             >
               Make another submission &#8594;
             </a>

@@ -260,7 +260,7 @@ export default function UploadForm() {
               type="file"
               accept="video/*"
               onChange={handleFileChange}
-              style={{ display: 'block', width: '100%', fontSize: '0.875rem', color: 'var(--color-secondary)' }}
+              style={{ display: 'block', width: '100%', fontSize: '0.875rem', color: 'var(--color-secondary)', cursor: 'pointer' }}
             />
           </div>
         )}
