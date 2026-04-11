@@ -146,37 +146,61 @@ export default function UploadForm() {
 
   const isProcessing = status === 'uploading' || status === 'analyzing';
 
+  const inputStyle = {
+    width: '100%',
+    border: '1px solid var(--color-border)',
+    borderRadius: '2px',
+    padding: '0.625rem 0.75rem',
+    fontSize: '0.875rem',
+    background: 'transparent',
+    color: 'var(--color-body)',
+    outline: 'none',
+    fontFamily: 'var(--font-dm-sans), Arial, sans-serif',
+  };
+
   return (
     <div className="max-w-xl mx-auto p-6 space-y-6">
-      <h1 className="text-2xl font-semibold text-gray-900">
+      <h1 style={{ fontSize: '1.5rem', fontWeight: '600', color: 'var(--color-body)', fontFamily: 'var(--font-fraunces), serif', fontOpticalSizing: 'auto' }}>
         Upload your movement
       </h1>
-      <p className="text-gray-500 text-sm">
+      <p style={{ color: 'var(--color-secondary)', fontSize: '0.875rem' }}>
         Upload or record a video of yourself dancing. The system will
         auto-tag it, and you will be able to correct those tags.
       </p>
 
       <div className="space-y-4">
-        <div className="flex border border-gray-200 rounded overflow-hidden">
+        <div style={{ display: 'flex', border: '1px solid var(--color-border)', borderRadius: '2px', overflow: 'hidden' }}>
           <button
             onClick={() => { setInputMode('upload'); setFile(null); }}
             disabled={isProcessing}
-            className={`flex-1 py-2 text-sm font-medium transition-colors ${
-              inputMode === 'upload'
-                ? 'bg-gray-900 text-white'
-                : 'bg-white text-gray-500 hover:bg-gray-50'
-            }`}
+            style={{
+              flex: 1,
+              padding: '0.5rem',
+              fontSize: '0.875rem',
+              fontWeight: '500',
+              fontFamily: 'var(--font-dm-sans), Arial, sans-serif',
+              cursor: 'pointer',
+              border: 'none',
+              backgroundColor: inputMode === 'upload' ? 'var(--color-body)' : 'transparent',
+              color: inputMode === 'upload' ? 'var(--color-surface)' : 'var(--color-secondary)',
+            }}
           >
             Upload file
           </button>
           <button
             onClick={() => { setInputMode('record'); setFile(null); }}
             disabled={isProcessing}
-            className={`flex-1 py-2 text-sm font-medium transition-colors ${
-              inputMode === 'record'
-                ? 'bg-gray-900 text-white'
-                : 'bg-white text-gray-500 hover:bg-gray-50'
-            }`}
+            style={{
+              flex: 1,
+              padding: '0.5rem',
+              fontSize: '0.875rem',
+              fontWeight: '500',
+              fontFamily: 'var(--font-dm-sans), Arial, sans-serif',
+              cursor: 'pointer',
+              border: 'none',
+              backgroundColor: inputMode === 'record' ? 'var(--color-body)' : 'transparent',
+              color: inputMode === 'record' ? 'var(--color-surface)' : 'var(--color-secondary)',
+            }}
           >
             Record video
           </button>
@@ -184,24 +208,24 @@ export default function UploadForm() {
 
         {inputMode === 'upload' && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: 'var(--color-body)', marginBottom: '0.25rem' }}>
               Video file
             </label>
             <input
               type="file"
               accept="video/*"
               onChange={handleFileChange}
-              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
+              style={{ display: 'block', width: '100%', fontSize: '0.875rem', color: 'var(--color-secondary)' }}
             />
             {file && (
-              <div className="mt-3">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+              <div style={{ marginTop: '0.75rem' }}>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: 'var(--color-body)', marginBottom: '0.25rem' }}>
                   Preview
                 </label>
                 <video
                   src={URL.createObjectURL(file)}
                   controls
-                  className="w-full rounded border border-gray-200 h-48 object-cover"
+                  style={{ width: '100%', border: '1px solid var(--color-border)', borderRadius: '2px', height: '12rem', objectFit: 'cover' }}
                 />
               </div>
             )}
@@ -210,7 +234,7 @@ export default function UploadForm() {
 
         {inputMode === 'record' && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: 'var(--color-body)', marginBottom: '0.25rem' }}>
               Webcam
             </label>
             {file ? (
@@ -218,11 +242,11 @@ export default function UploadForm() {
                 <video
                   src={URL.createObjectURL(file)}
                   controls
-                  className="w-full rounded border border-gray-200 h-48 object-cover"
+                  style={{ width: '100%', border: '1px solid var(--color-border)', borderRadius: '2px', height: '12rem', objectFit: 'cover' }}
                 />
                 <button
                   onClick={() => setFile(null)}
-                  className="text-xs text-gray-500 underline hover:text-gray-700"
+                  style={{ fontSize: '0.75rem', color: 'var(--color-secondary)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}
                 >
                   Record again
                 </button>
@@ -234,69 +258,72 @@ export default function UploadForm() {
         )}
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Your name <span className="text-red-500">*</span>
+          <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: 'var(--color-body)', marginBottom: '0.25rem' }}>
+            Your name <span style={{ color: 'var(--color-rejected)' }}>*</span>
           </label>
           <input
             type="text"
             value={contributor}
             onChange={(e) => setContributor(e.target.value)}
             placeholder="Enter your name"
-            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+            style={inputStyle}
+            onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--color-body)'; }}
+            onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; }}
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Note about this movement <span className="text-red-500">*</span>
+          <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: 'var(--color-body)', marginBottom: '0.25rem' }}>
+            Note about this movement <span style={{ color: 'var(--color-rejected)' }}>*</span>
           </label>
           <textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="Describe the tradition, context, and meaning of this movement. Be specific — this information will be reviewed by community members."
             rows={3}
-            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+            style={inputStyle}
+            onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--color-body)'; }}
+            onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; }}
           />
         </div>
 
         {status === 'uploading' && (
           <div className="space-y-1">
-            <div className="w-full bg-gray-100 rounded-full h-2">
+            <div style={{ width: '100%', backgroundColor: 'var(--color-border)', borderRadius: '2px', height: '2px' }}>
               <div
-                className="bg-gray-800 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${progress}%` }}
+                style={{ backgroundColor: 'var(--color-body)', height: '2px', borderRadius: '2px', width: `${progress}%`, transition: 'width 300ms ease' }}
               />
             </div>
-            <p className="text-sm text-gray-500">{progress}% uploaded</p>
+            <p style={{ fontSize: '0.875rem', color: 'var(--color-secondary)', fontFamily: 'var(--font-dm-mono), monospace' }}>{progress}% uploaded</p>
           </div>
         )}
 
         {status === 'analyzing' && (
-          <div className="p-4 bg-gray-50 rounded border border-gray-200">
-            <p className="text-sm text-gray-500 animate-pulse">
+          <div style={{ padding: '1rem', border: '1px solid var(--color-border)', borderRadius: '2px', background: 'transparent' }}>
+            <p className="state-breathing" style={{ fontSize: '0.875rem', color: 'var(--color-secondary)' }}>
               Analysing movement... this may take 20-30 seconds.
             </p>
           </div>
         )}
 
-        {error && <p className="text-sm text-red-500">{error}</p>}
+        {error && <p style={{ fontSize: '0.875rem', color: 'var(--color-rejected)' }}>{error}</p>}
 
         {status === 'success' && result && (
-          <div className="p-4 bg-gray-50 rounded border border-gray-200 space-y-3">
-            <p className="text-sm font-medium text-gray-700">
+          <div className="page-enter" style={{ padding: '1rem', border: '1px solid var(--color-border)', borderRadius: '2px', background: 'transparent' }}>
+            <p style={{ fontSize: '0.875rem', fontWeight: '500', color: 'var(--color-body)', marginBottom: '0.5rem' }}>
               Upload complete
             </p>
-            <p className="text-xs text-gray-500">
+            <p style={{ fontSize: '0.75rem', color: 'var(--color-secondary)', fontFamily: 'var(--font-dm-mono), monospace', marginBottom: '0.5rem' }}>
               Submission ID: {result.id}
             </p>
-            
+
             <a
               href={`/submission/${result.id}`}
-              className="text-xs text-gray-700 underline hover:text-gray-900"
+              style={{ fontSize: '0.75rem', color: 'var(--color-body)', textDecoration: 'underline', display: 'block', marginBottom: '0.5rem' }}
             >
               View submission &#8594;
             </a>
-            <p className="text-xs text-gray-500">
+            <p style={{ fontSize: '0.75rem', color: 'var(--color-secondary)' }}>
               Your video has been submitted for community review.
             </p>
           </div>
@@ -305,7 +332,31 @@ export default function UploadForm() {
         <button
           onClick={handleUpload}
           disabled={isProcessing || !file}
-          className="w-full py-2 px-4 bg-gray-900 text-white text-sm font-medium rounded hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          style={{
+            width: '100%',
+            padding: '0.625rem 1rem',
+            backgroundColor: 'transparent',
+            color: 'var(--color-body)',
+            fontSize: '0.875rem',
+            fontWeight: '500',
+            fontFamily: 'var(--font-dm-sans), Arial, sans-serif',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            border: '1.5px solid var(--color-body)',
+            borderRadius: '2px',
+            cursor: isProcessing || !file ? 'not-allowed' : 'pointer',
+            opacity: isProcessing || !file ? 0.4 : 1,
+          }}
+          onMouseEnter={(e) => {
+            if (!isProcessing && file) {
+              e.currentTarget.style.backgroundColor = 'var(--color-body)';
+              e.currentTarget.style.color = 'var(--color-surface)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.color = 'var(--color-body)';
+          }}
         >
           {status === 'uploading'
             ? 'Uploading...'

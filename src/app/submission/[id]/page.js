@@ -11,9 +11,9 @@ export default async function SubmissionPage({ params }) {
   if (!doc.exists) {
     return (
       <>
-        <main className="min-h-screen bg-white py-12">
+        <main style={{ minHeight: '100vh', backgroundColor: 'var(--color-surface)' }} className="py-12">
           <div className="max-w-2xl mx-auto px-6">
-            <p className="text-sm text-gray-500">Submission not found.</p>
+            <p style={{ fontSize: '0.875rem', color: 'var(--color-secondary)' }}>Submission not found.</p>
           </div>
         </main>
         <InfoOverlay />
@@ -27,37 +27,48 @@ export default async function SubmissionPage({ params }) {
 
   return (
     <>
-      <main className="min-h-screen bg-white py-12">
-        <div className="max-w-2xl mx-auto px-6 space-y-8">
+      <main style={{ minHeight: '100vh', backgroundColor: 'var(--color-surface)' }} className="py-12">
+        <div className="max-w-2xl mx-auto px-6 space-y-8 page-enter">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900">
+            <h1 style={{ fontSize: '1.5rem', fontWeight: '600', color: 'var(--color-body)', fontFamily: 'var(--font-fraunces), serif', fontOpticalSizing: 'auto' }}>
               Thank you for your submission
             </h1>
-            <p className="text-xs text-gray-400 mt-1">
+            <p style={{ fontSize: '0.75rem', color: 'var(--color-machine)', marginTop: '0.25rem', fontFamily: 'var(--font-dm-mono), monospace' }}>
               {submission.filename}
             </p>
-            <p className="text-sm text-gray-500 mt-1">
+            <p style={{ fontSize: '0.875rem', color: 'var(--color-secondary)', marginTop: '0.25rem' }}>
               Contributed by {submission.contributor} · Status:{' '}
-              {submission.status}
+              <span style={{
+                fontFamily: 'var(--font-dm-mono), monospace',
+                fontSize: '0.75rem',
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+                border: '1px solid var(--color-machine)',
+                borderRadius: '2px',
+                padding: '0.125rem 0.375rem',
+                color: 'var(--color-machine)',
+              }}>
+                {submission.status}
+              </span>
             </p>
           </div>
 
           <QRCode url={submissionURL} />
 
           {submission.note && (
-            <div className="p-4 bg-gray-50 rounded border border-gray-200">
-              <p className="text-xs font-medium text-gray-500 mb-1">
+            <div style={{ padding: '1rem', border: '1px solid var(--color-border)', borderRadius: '2px', background: 'transparent' }}>
+              <p style={{ fontSize: '0.75rem', fontWeight: '500', color: 'var(--color-secondary)', marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 Your note
               </p>
-              <p className="text-sm text-gray-700">{submission.note}</p>
+              <p style={{ fontSize: '0.875rem', color: 'var(--color-body)' }}>{submission.note}</p>
             </div>
           )}
 
           <div>
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-4">
+            <p style={{ fontSize: '0.75rem', fontWeight: '500', color: 'var(--color-secondary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '1rem', fontFamily: 'var(--font-dm-mono), monospace' }}>
               Movement analysis
             </p>
-            <div className="border border-gray-200 rounded p-4">
+            <div style={{ border: '1px solid var(--color-border)', borderRadius: '2px', padding: '1rem' }}>
               <TagDisplay
                 autoTags={submission.autoTags || []}
                 humanTags={submission.humanTags || []}
@@ -66,13 +77,13 @@ export default async function SubmissionPage({ params }) {
           </div>
 
           <div className="flex items-center justify-between">
-            <p className="text-xs text-gray-400">
+            <p style={{ fontSize: '0.75rem', color: 'var(--color-machine)', fontFamily: 'var(--font-dm-mono), monospace' }}>
               Submission ID: {id}
             </p>
-            
+
             <a
               href="/upload"
-              className="text-xs text-gray-700 underline hover:text-gray-900"
+              style={{ fontSize: '0.75rem', color: 'var(--color-body)', textDecoration: 'underline' }}
             >
               Make another submission &#8594;
             </a>

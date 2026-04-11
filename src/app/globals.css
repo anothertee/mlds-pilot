@@ -1,23 +1,61 @@
 @import "tailwindcss";
 
 :root {
-  --color-hover: #f3f4f6;
-  --color-hover-dark: rgba(255, 255, 255, 0.1);
+  --color-ink: #12100E;
+  --color-ink-white: #F0EDE6;
+  --color-secondary-dark: #4B4845;
+  --color-border-dark: #2A2820;
+  --color-machine: #9CA3AF;
+  --color-parchment: #F5F0E8;
+  --color-surface: #F8F8F8;
+  --color-body: #1A1A1A;
+  --color-secondary: #6B7280;
+  --color-border: #D4CFC7;
+  --color-community: #4A6E6A;
+  --color-accent: #7A9E99;
+  --color-approved: #C9A96E;
+  --color-rejected: #6E3120;
+  --color-processing: #2C3E3A;
+  --color-light-catch: #C9A96E;
 }
 
 body {
-  color: #171717;
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--color-body);
+  background-color: var(--color-surface);
+  font-family: var(--font-dm-sans), Arial, sans-serif;
 }
 
-a, button {
-  transition: background-color 0.15s ease, opacity 0.15s ease;
+@keyframes breathe {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
 }
 
-.btn:hover {
-  background-color: var(--color-hover) !important;
+@keyframes surface {
+  0%, 100% { opacity: 0.6; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-2px); }
 }
 
-.btn-dark:hover {
-  background-color: var(--color-hover-dark) !important;
+@keyframes materialise {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+* {
+  transition:
+    background-color 300ms ease,
+    color 300ms ease,
+    border-color 300ms ease,
+    opacity 300ms ease;
+}
+
+.page-enter {
+  animation: materialise 600ms ease forwards;
+}
+
+.state-breathing {
+  animation: breathe 3s ease-in-out infinite;
+}
+
+.state-surface {
+  animation: surface 4s ease-in-out infinite;
 }
