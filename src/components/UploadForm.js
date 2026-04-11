@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { logger } from '@/lib/logger';
 import VideoRecorder from '@/components/VideoRecorder';
 
@@ -14,6 +14,16 @@ export default function UploadForm() {
   const [error, setError] = useState(null);
   const [inputMode, setInputMode] = useState('upload');
   const [fileURL, setFileURL] = useState(null);
+  const [logs, setLogs] = useState([]);
+  const logsEndRef = useRef(null);
+
+  useEffect(() => {
+    logsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [logs]);
+
+  function addLog(message) {
+    setLogs((prev) => [...prev, { message, id: Date.now() + Math.random() }]);
+  }
 
   useEffect(() => {
     if (!file) {
@@ -68,6 +78,8 @@ export default function UploadForm() {
 
     setStatus('uploading');
     setError(null);
+    setLogs([]);
+    addLog('Upload initiated.');
 
     try {
       const formData = new FormData();
@@ -76,6 +88,7 @@ export default function UploadForm() {
       formData.append('note', note);
 
       setProgress(25);
+      addLog('Transferring file...');
 
       const uploadResponse = await fetch('/api/upload', {
         method: 'POST',
@@ -91,6 +104,7 @@ export default function UploadForm() {
       setProgress(100);
 
       logger.success('UploadForm', 'Upload complete', { id: data.id });
+      addLog('File received. Starting analysis...');
       setResult(data);
       setStatus('analyzing');
 
@@ -106,6 +120,7 @@ export default function UploadForm() {
 
   async function analyzeVideo(gcsUri, submissionId) {
     logger.info('UploadForm', 'Starting auto-tagging', { submissionId });
+    addLog('Connecting to Video Intelligence API...');
 
     const startResponse = await fetch('/api/analyze', {
       method: 'POST',
@@ -120,6 +135,7 @@ export default function UploadForm() {
 
     const { operationName } = await startResponse.json();
     logger.info('UploadForm', 'Analysis started', { operationName });
+    addLog(`Analysis operation started.`);
 
     return new Promise((resolve, reject) => {
       const poll = setInterval(async () => {
@@ -143,9 +159,11 @@ export default function UploadForm() {
             logger.success('UploadForm', 'Auto-tagging complete', {
               tags: status.autoTags,
             });
+            addLog(`Auto-tagging complete — ${status.autoTags?.length ?? 0} tags generated.`);
             resolve(status.autoTags);
           } else {
             logger.info('UploadForm', 'Still processing...');
+            addLog('Still processing...');
           }
         } catch (error) {
           clearInterval(poll);
@@ -279,7 +297,7 @@ export default function UploadForm() {
           />
         </div>
 
-        {/* Progress */}
+        {/* Progress bar — upload only */}
         {status === 'uploading' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
             <div style={{ width: '100%', backgroundColor: 'var(--color-border)', borderRadius: '2px', height: '2px' }}>
@@ -289,16 +307,26 @@ export default function UploadForm() {
           </div>
         )}
 
-        {/* Analysing */}
-        {status === 'analyzing' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-              <p style={{ fontSize: '0.875rem', color: 'var(--color-secondary)' }}>Analysing movement...</p>
-              <p style={{ fontSize: '0.75rem', color: 'var(--color-machine)', fontFamily: 'var(--font-dm-mono), monospace' }}>20–30s</p>
-            </div>
-            <div style={{ width: '100%', height: '2px', backgroundColor: 'var(--color-border)', borderRadius: '2px', overflow: 'hidden' }}>
-              <div className="state-analyzing" style={{ width: '25%', height: '100%', backgroundColor: 'var(--color-body)', borderRadius: '2px' }} />
-            </div>
+        {/* Log terminal — uploading + analysing */}
+        {(status === 'uploading' || status === 'analyzing') && logs.length > 0 && (
+          <div style={{
+            backgroundColor: '#EFEFEF',
+            border: '1px solid var(--color-border)',
+            borderRadius: '2px',
+            padding: '0.625rem 0.75rem',
+            maxHeight: '7rem',
+            overflowY: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.25rem',
+          }}>
+            {logs.map((log) => (
+              <p key={log.id} style={{ fontSize: '0.75rem', color: 'var(--color-secondary)', fontFamily: 'var(--font-dm-mono), monospace', lineHeight: '1.4', margin: 0 }}>
+                <span style={{ color: 'var(--color-machine)', marginRight: '0.5rem', userSelect: 'none' }}>›</span>
+                {log.message}
+              </p>
+            ))}
+            <div ref={logsEndRef} />
           </div>
         )}
 
