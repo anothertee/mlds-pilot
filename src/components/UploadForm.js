@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
 import VideoRecorder from '@/components/VideoRecorder';
 
@@ -13,6 +13,17 @@ export default function UploadForm() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [inputMode, setInputMode] = useState('upload');
+  const [fileURL, setFileURL] = useState(null);
+
+  useEffect(() => {
+    if (!file) {
+      setFileURL(null);
+      return;
+    }
+    const url = fileURL;
+    setFileURL(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
 
   function handleFileChange(e) {
     const selected = e.target.files[0];
@@ -364,7 +375,7 @@ export default function UploadForm() {
         {/* Upload mode — file selected: large preview */}
         {inputMode === 'upload' && file && (
           <video
-            src={URL.createObjectURL(file)}
+            src={fileURL}
             controls
             style={{ width: '100%', height: '100%', objectFit: 'contain', backgroundColor: '#000' }}
           />
@@ -381,7 +392,7 @@ export default function UploadForm() {
         {inputMode === 'record' && file && (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             <video
-              src={URL.createObjectURL(file)}
+              src={fileURL}
               controls
               style={{ flex: 1, width: '100%', objectFit: 'contain', backgroundColor: '#000' }}
             />
