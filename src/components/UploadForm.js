@@ -111,6 +111,8 @@ export default function UploadForm() {
         xhr.onload = () => {
           if (xhr.status >= 200 && xhr.status < 300) {
             resolve(JSON.parse(xhr.responseText));
+          } else if (xhr.status === 413) {
+            reject(new Error('File is too large to upload. Please compress your video or use a shorter clip.'));
           } else {
             try { reject(new Error(JSON.parse(xhr.responseText).error || 'Upload failed')); }
             catch { reject(new Error('Upload failed')); }
@@ -330,33 +332,77 @@ export default function UploadForm() {
               onChange={handleFileChange}
               style={{ display: 'none' }}
             />
-            <button
-              onClick={() => fileInputRef.current.click()}
-              disabled={isProcessing}
-              style={{
-                padding: '0.5rem 1rem',
-                fontSize: '0.875rem',
-                fontWeight: '500',
-                fontFamily: 'var(--font-dm-sans), Arial, sans-serif',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                border: '1.5px solid var(--color-body)',
+            {file ? (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '0.75rem',
+                padding: '0.5rem 0.75rem',
+                border: '1px solid var(--color-border)',
                 borderRadius: '2px',
-                background: 'transparent',
-                color: 'var(--color-body)',
-                cursor: 'pointer',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--color-body)';
-                e.currentTarget.style.color = 'var(--color-surface)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.color = 'var(--color-body)';
-              }}
-            >
-              Choose file
-            </button>
+              }}>
+                <span style={{
+                  fontSize: '0.8125rem',
+                  color: 'var(--color-body)',
+                  fontFamily: 'var(--font-dm-mono), monospace',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  minWidth: 0,
+                }}>
+                  {file.name}
+                </span>
+                <button
+                  onClick={() => fileInputRef.current.click()}
+                  disabled={isProcessing}
+                  style={{
+                    flexShrink: 0,
+                    fontSize: '0.75rem',
+                    fontFamily: 'var(--font-dm-sans), Arial, sans-serif',
+                    color: 'var(--color-machine)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: isProcessing ? 'not-allowed' : 'pointer',
+                    padding: 0,
+                    textDecoration: 'underline',
+                    textUnderlineOffset: '2px',
+                  }}
+                  onMouseEnter={(e) => { if (!isProcessing) e.currentTarget.style.color = 'var(--color-body)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-machine)'; }}
+                >
+                  Change
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => fileInputRef.current.click()}
+                disabled={isProcessing}
+                style={{
+                  padding: '0.5rem 1rem',
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
+                  fontFamily: 'var(--font-dm-sans), Arial, sans-serif',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  border: '1.5px solid var(--color-body)',
+                  borderRadius: '2px',
+                  background: 'transparent',
+                  color: 'var(--color-body)',
+                  cursor: 'pointer',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--color-body)';
+                  e.currentTarget.style.color = 'var(--color-surface)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = 'var(--color-body)';
+                }}
+              >
+                Choose file
+              </button>
+            )}
           </div>
         )}
 
