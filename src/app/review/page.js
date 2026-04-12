@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import ReviewQueue from '@/components/ReviewQueue';
 import { logger } from '@/lib/logger';
 
@@ -70,14 +71,14 @@ export default function ReviewPage() {
   if (!authenticated) {
     return (
       <main style={{ minHeight: '100vh', backgroundColor: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <a
+        <Link
           href="/"
           style={{ position: 'fixed', top: '1.5rem', left: '1.5rem', fontSize: '0.75rem', color: 'var(--color-machine)', textDecoration: 'none', fontFamily: 'var(--font-dm-mono), monospace' }}
           onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-body)'; }}
           onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-machine)'; }}
         >
           &#8592; Home
-        </a>
+        </Link>
         <div className="max-w-sm w-full px-6 space-y-4">
           <h1 style={{ fontSize: '1.5rem', fontWeight: '600', color: 'var(--color-body)', fontFamily: 'var(--font-fraunces), serif', fontOpticalSizing: 'auto' }}>
             Reviewer access
@@ -222,14 +223,14 @@ export default function ReviewPage() {
 
         {/* Home link */}
         <div style={{ marginTop: 'auto', paddingTop: '2rem', borderTop: '1px solid var(--color-border)' }}>
-          <a
+          <Link
             href="/"
             style={{ fontSize: '0.75rem', color: 'var(--color-machine)', textDecoration: 'none', fontFamily: 'var(--font-dm-mono), monospace' }}
             onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-body)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-machine)'; }}
           >
             &#8592; Home
-          </a>
+          </Link>
         </div>
       </aside>
 

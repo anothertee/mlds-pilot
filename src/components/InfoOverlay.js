@@ -128,7 +128,7 @@ export default function InfoOverlay({ dark = true }) {
                 </h2>
                 <p style={{ fontSize: '0.875rem', color: 'var(--color-machine)', lineHeight: '1.75', fontFamily: 'var(--font-dm-sans), Arial, sans-serif' }}>
                   The automatic tags are intentionally decontextualised. A Caribbean
-                  harvest dance might be labelled "physical exercise" or "standing".
+                  harvest dance might be labelled &ldquo;physical exercise&rdquo; or &ldquo;standing&rdquo;.
                   This gap between what the machine sees and what the movement means
                   is the argument this system is built to make visible.
                 </p>

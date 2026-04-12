@@ -1,5 +1,5 @@
 import { Storage } from '@google-cloud/storage';
-import { adminDb } from '@/lib/firebaseAdmin';
+import { getAdminDb } from '@/lib/firebaseAdmin';
 import { logger } from '@/lib/logger';
 
 function getStorageClient() {
@@ -28,7 +28,7 @@ export async function GET(request) {
       );
     }
 
-    const doc = await adminDb
+    const doc = await getAdminDb()
       .collection('submissions')
       .doc(submissionId)
       .get();

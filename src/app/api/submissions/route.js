@@ -1,4 +1,4 @@
-import { adminDb } from '@/lib/firebaseAdmin';
+import { getAdminDb } from '@/lib/firebaseAdmin';
 import { logger } from '@/lib/logger';
 
 const VALID_STATUSES = [
@@ -20,6 +20,7 @@ export async function GET(request) {
       return Response.json({ error: 'Unauthorised' }, { status: 401 });
     }
 
+    const adminDb = getAdminDb();
     let query = adminDb.collection('submissions').orderBy('createdAt', 'desc');
 
     if (status && status !== 'all') {

@@ -28,6 +28,13 @@ export default function VideoRecorder({ onRecordingComplete }) {
     }
   }, []);
 
+  function stopStream() {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+  }
+
   useEffect(() => {
     return () => {
       stopStream();
@@ -43,13 +50,6 @@ export default function VideoRecorder({ onRecordingComplete }) {
       if (MediaRecorder.isTypeSupported(type)) return type;
     }
     return '';
-  }
-
-  function stopStream() {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
-    }
   }
 
   async function startCamera() {
