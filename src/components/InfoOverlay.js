@@ -55,19 +55,6 @@ export default function InfoOverlay({ dark = true }) {
         }}
         onMouseLeave={(e) => {
           Object.assign(e.currentTarget.style, triggerStyle);
-          e.currentTarget.style.position = 'fixed';
-          e.currentTarget.style.bottom = '1.5rem';
-          e.currentTarget.style.right = '1.5rem';
-          e.currentTarget.style.width = '2.5rem';
-          e.currentTarget.style.height = '2.5rem';
-          e.currentTarget.style.borderRadius = '2px';
-          e.currentTarget.style.cursor = 'pointer';
-          e.currentTarget.style.fontSize = '0.875rem';
-          e.currentTarget.style.fontWeight = '500';
-          e.currentTarget.style.display = 'flex';
-          e.currentTarget.style.alignItems = 'center';
-          e.currentTarget.style.justifyContent = 'center';
-          e.currentTarget.style.zIndex = '50';
         }}
         aria-label="About this installation"
       >

@@ -31,20 +31,28 @@ export default function UploadForm() {
       setFileURL(null);
       return;
     }
-    const url = fileURL;
+    const url = URL.createObjectURL(file);
     setFileURL(url);
     return () => URL.revokeObjectURL(url);
   }, [file]);
 
+  const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+
   function handleFileChange(e) {
     const selected = e.target.files[0];
-    if (selected && selected.type.startsWith('video/')) {
-      setFile(selected);
-      setError(null);
-    } else {
+    if (!selected) return;
+    if (!selected.type.startsWith('video/')) {
       setError('Please select a video file.');
       setFile(null);
+      return;
     }
+    if (selected.size > MAX_FILE_SIZE) {
+      setError('File is too large. Please upload a video under 500MB.');
+      setFile(null);
+      return;
+    }
+    setFile(selected);
+    setError(null);
   }
 
   function handleRecordingComplete(recordedFile) {
@@ -80,7 +88,10 @@ export default function UploadForm() {
     setStatus('uploading');
     setError(null);
     setLogs([]);
+    setProgress(0);
     addLog('Upload initiated.');
+
+    let fillInterval = null;
 
     try {
       const formData = new FormData();
@@ -88,31 +99,45 @@ export default function UploadForm() {
       formData.append('contributor', contributor);
       formData.append('note', note);
 
-      setProgress(25);
       addLog('Transferring file...');
 
-      const uploadResponse = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
+      const data = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            setProgress(Math.round((e.loaded / e.total) * 60));
+          }
+        };
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve(JSON.parse(xhr.responseText));
+          } else {
+            try { reject(new Error(JSON.parse(xhr.responseText).error || 'Upload failed')); }
+            catch { reject(new Error('Upload failed')); }
+          }
+        };
+        xhr.onerror = () => reject(new Error('Upload failed'));
+        xhr.open('POST', '/api/upload');
+        xhr.send(formData);
       });
 
-      if (!uploadResponse.ok) {
-        const err = await uploadResponse.json();
-        throw new Error(err.error || 'Upload failed');
-      }
-
-      const data = await uploadResponse.json();
-      setProgress(100);
-
+      setProgress(60);
       logger.success('UploadForm', 'Upload complete', { id: data.id });
       addLog('File received. Starting analysis...');
       setResult(data);
       setStatus('analyzing');
 
+      fillInterval = setInterval(() => {
+        setProgress((prev) => (prev < 90 ? prev + 1 : 90));
+      }, 600);
+
       const tags = await analyzeVideo(data.gcsUri, data.id);
+      clearInterval(fillInterval);
+      setProgress(100);
       setResult((prev) => ({ ...prev, autoTags: tags }));
       setStatus('success');
     } catch (err) {
+      if (fillInterval) clearInterval(fillInterval);
       logger.error('UploadForm', 'Process failed', { message: err.message });
       setError(err.message);
       setStatus('error');
@@ -174,6 +199,18 @@ export default function UploadForm() {
     });
   }
 
+  function handleDismiss() {
+    setStatus('idle');
+    setResult(null);
+    setFile(null);
+    setContributor('');
+    setNote('');
+    setInputMode('upload');
+    setLogs([]);
+    setProgress(0);
+    setError(null);
+  }
+
   const isProcessing = status === 'uploading' || status === 'analyzing';
 
   const inputStyle = {
@@ -205,6 +242,21 @@ export default function UploadForm() {
         gap: '1.25rem',
       }}>
         <div>
+          <a
+            href="/"
+            style={{
+              display: 'inline-block',
+              fontSize: '0.75rem',
+              color: 'var(--color-machine)',
+              fontFamily: 'var(--font-dm-mono), monospace',
+              textDecoration: 'none',
+              marginBottom: '1rem',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-body)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-machine)'; }}
+          >
+            ← Exit
+          </a>
           <h1 style={{ fontSize: '1.25rem', fontWeight: '600', color: 'var(--color-body)', fontFamily: 'var(--font-fraunces), serif', fontOpticalSizing: 'auto', lineHeight: '1.2', marginBottom: '0.375rem' }}>
             Upload your movement
           </h1>
@@ -250,6 +302,11 @@ export default function UploadForm() {
             Record video
           </button>
         </div>
+
+        {/* Context blurb */}
+        <p style={{ fontSize: '0.75rem', color: 'var(--color-secondary)', lineHeight: '1.6' }}>
+          Any movement is welcome — dance, gesture, ritual, sport, or daily practice. Maximum 5 minutes.
+        </p>
 
         {/* File picker — upload mode only */}
         {inputMode === 'upload' && (
@@ -326,13 +383,15 @@ export default function UploadForm() {
           />
         </div>
 
-        {/* Progress bar — upload only */}
-        {status === 'uploading' && (
+        {/* Progress bar — upload + analysis */}
+        {(status === 'uploading' || status === 'analyzing') && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
             <div style={{ width: '100%', backgroundColor: 'var(--color-border)', borderRadius: '2px', height: '2px' }}>
-              <div style={{ backgroundColor: 'var(--color-body)', height: '2px', borderRadius: '2px', width: `${progress}%`, transition: 'width 300ms ease' }} />
+              <div style={{ backgroundColor: 'var(--color-body)', height: '2px', borderRadius: '2px', width: `${progress}%`, transition: 'width 600ms ease' }} />
             </div>
-            <p style={{ fontSize: '0.75rem', color: 'var(--color-secondary)', fontFamily: 'var(--font-dm-mono), monospace' }}>{progress}% uploaded</p>
+            <p style={{ fontSize: '0.75rem', color: 'var(--color-secondary)', fontFamily: 'var(--font-dm-mono), monospace' }}>
+              {progress}% — {status === 'uploading' ? 'uploading' : 'analysing'}
+            </p>
           </div>
         )}
 
@@ -467,6 +526,7 @@ export default function UploadForm() {
         }}
       >
         <div style={{
+          position: 'relative',
           backgroundColor: 'var(--color-surface)',
           border: '1px solid var(--color-border)',
           borderRadius: '2px',
@@ -474,6 +534,26 @@ export default function UploadForm() {
           maxWidth: '22rem',
           width: '100%',
         }}>
+          <button
+            onClick={handleDismiss}
+            style={{
+              position: 'absolute',
+              top: '1rem',
+              right: '1rem',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'var(--color-machine)',
+              fontSize: '1rem',
+              lineHeight: 1,
+              padding: '0.25rem',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-body)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-machine)'; }}
+            aria-label="Dismiss"
+          >
+            ✕
+          </button>
           <p style={{ fontSize: '0.75rem', fontFamily: 'var(--font-dm-mono), monospace', color: 'var(--color-machine)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.75rem' }}>
             Complete
           </p>

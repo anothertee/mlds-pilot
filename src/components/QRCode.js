@@ -18,7 +18,7 @@ export default function QRCode({ url }) {
         />
       </div>
       <p style={{ fontSize: '0.75rem', color: 'var(--color-secondary)', textAlign: 'center' }}>
-        Scan to save this submission to your phone
+        Scan to view or download your submission on your phone
       </p>
     </div>
   );
