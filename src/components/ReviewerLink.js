@@ -30,7 +30,9 @@ export default function ReviewerLink({ dark = false }) {
           e.currentTarget.style.borderColor = 'var(--color-ink-white)';
           e.currentTarget.style.color = 'var(--color-ink-white)';
         } else {
-          e.currentTarget.style.backgroundColor = 'rgba(248,248,248,0.7)';
+          e.currentTarget.style.backgroundColor = '#12100E';
+          e.currentTarget.style.borderColor = '#12100E';
+          e.currentTarget.style.color = '#F8F8F8';
         }
       }}
       onMouseLeave={(e) => {
@@ -39,6 +41,8 @@ export default function ReviewerLink({ dark = false }) {
           e.currentTarget.style.color = 'var(--color-secondary-dark)';
         } else {
           e.currentTarget.style.backgroundColor = 'rgba(248,248,248,0.4)';
+          e.currentTarget.style.borderColor = 'rgba(18,16,14,0.3)';
+          e.currentTarget.style.color = '#12100E';
         }
       }}
     >

@@ -26,11 +26,11 @@ export default function InfoOverlay({ dark = true }) {
         backgroundColor: 'transparent',
       }
     : {
-        border: '1.5px solid rgba(18,16,14,0.3)',
-        color: '#12100E',
-        backgroundColor: 'rgba(248,248,248,0.7)',
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)',
+        border: '1.5px solid #12100E',
+        color: '#F8F8F8',
+        backgroundColor: '#12100E',
+        backdropFilter: 'none',
+        WebkitBackdropFilter: 'none',
       };
 
   return (

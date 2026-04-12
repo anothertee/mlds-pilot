@@ -125,7 +125,7 @@ export default function ReviewQueue({
     borderRadius: '2px',
     padding: '0.375rem 0.75rem',
     fontSize: '0.75rem',
-    background: 'transparent',
+    background: '#ffffff',
     color: 'var(--color-body)',
     outline: 'none',
     fontFamily: 'var(--font-dm-sans), Arial, sans-serif',

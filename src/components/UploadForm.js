@@ -221,7 +221,7 @@ export default function UploadForm() {
     borderRadius: '2px',
     padding: '0.625rem 0.75rem',
     fontSize: '0.875rem',
-    background: 'transparent',
+    background: '#ffffff',
     color: 'var(--color-body)',
     outline: 'none',
     fontFamily: 'var(--font-dm-sans), Arial, sans-serif',
