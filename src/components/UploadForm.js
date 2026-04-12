@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { logger } from '@/lib/logger';
 import VideoRecorder from '@/components/VideoRecorder';
 
@@ -27,10 +28,7 @@ export default function UploadForm() {
   }
 
   useEffect(() => {
-    if (!file) {
-      setFileURL(null);
-      return;
-    }
+    if (!file) return;
     const url = URL.createObjectURL(file);
     setFileURL(url);
     return () => URL.revokeObjectURL(url);
@@ -242,7 +240,7 @@ export default function UploadForm() {
         gap: '1.25rem',
       }}>
         <div>
-          <a
+          <Link
             href="/"
             style={{
               display: 'inline-block',
@@ -256,7 +254,7 @@ export default function UploadForm() {
             onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-machine)'; }}
           >
             ← Exit
-          </a>
+          </Link>
           <h1 style={{ fontSize: '1.25rem', fontWeight: '600', color: 'var(--color-body)', fontFamily: 'var(--font-fraunces), serif', fontOpticalSizing: 'auto', lineHeight: '1.2', marginBottom: '0.375rem' }}>
             Upload your movement
           </h1>

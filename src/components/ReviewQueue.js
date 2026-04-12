@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { logger } from '@/lib/logger';
 import TagDisplay from '@/components/TagDisplay';
 
@@ -19,12 +19,7 @@ export default function ReviewQueue({
   const [tagInputs, setTagInputs] = useState({});
   const [detailSubmission, setDetailSubmission] = useState(null);
 
-  useEffect(() => {
-    fetchSubmissions();
-    setDetailSubmission(null);
-  }, [status]);
-
-  async function fetchSubmissions() {
+  const fetchSubmissions = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch(
@@ -50,7 +45,12 @@ export default function ReviewQueue({
     } finally {
       setLoading(false);
     }
-  }
+  }, [reviewerPassword, status]);
+
+  useEffect(() => {
+    fetchSubmissions();
+    setDetailSubmission(null);
+  }, [fetchSubmissions]);
 
   async function handleDecision(submissionId, decision) {
     setProcessing(submissionId);
@@ -262,7 +262,7 @@ export default function ReviewQueue({
                 </span>
               </div>
               <p style={{ fontSize: '0.75rem', color: 'var(--color-secondary)', marginBottom: '0.5rem', lineHeight: '1.5' }}>
-                A useful tag names the specific tradition, gesture, or meaning — e.g. "Caribbean harvest gesture — welcoming abundance".
+                A useful tag names the specific tradition, gesture, or meaning — e.g. &ldquo;Caribbean harvest gesture — welcoming abundance&rdquo;.
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.5rem' }}>
                 {(tags[s.id] || []).map((tag, i) => (
@@ -515,9 +515,9 @@ export default function ReviewQueue({
                 </div>
                 <p style={{ fontSize: '0.75rem', color: 'var(--color-secondary)', marginBottom: '0.5rem' }}>
                   A useful tag names the specific tradition, gesture, or meaning.
-                  For example: "Caribbean harvest gesture — welcoming abundance"
-                  or "Yoruba greeting bow — showing respect to elders". Avoid
-                  generic labels like "dance" or "movement".
+                  For example: &ldquo;Caribbean harvest gesture — welcoming abundance&rdquo;
+                  or &ldquo;Yoruba greeting bow — showing respect to elders&rdquo;. Avoid
+                  generic labels like &ldquo;dance&rdquo; or &ldquo;movement&rdquo;.
                 </p>
                 <div className="space-y-2">
                   {(tags[submission.id] || []).map((tag, i) => (

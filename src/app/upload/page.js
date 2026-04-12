@@ -14,9 +14,7 @@ export default function UploadPage() {
 
   useEffect(() => {
     const stored = sessionStorage.getItem('facilitator_auth');
-    if (stored === 'true') {
-      setAuthenticated(true);
-    }
+    setAuthenticated(stored === 'true');
     setChecking(false);
   }, []);
 
