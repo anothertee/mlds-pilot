@@ -1,5 +1,5 @@
 import { getAdminDb } from '@/lib/firebaseAdmin';
-import TagDisplay from '@/components/TagDisplay';
+import AnimatedTagDisplay from '@/components/AnimatedTagDisplay';
 import QRCode from '@/components/QRCode';
 import InfoOverlay from '@/components/InfoOverlay';
 import ReviewerLink from '@/components/ReviewerLink';
@@ -69,7 +69,7 @@ export default async function SubmissionPage({ params }) {
               Movement analysis
             </p>
             <div style={{ border: '1px solid var(--color-border)', borderRadius: '2px', padding: '1rem' }}>
-              <TagDisplay
+              <AnimatedTagDisplay
                 autoTags={submission.autoTags || []}
                 humanTags={submission.humanTags || []}
               />

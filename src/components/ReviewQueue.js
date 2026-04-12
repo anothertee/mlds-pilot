@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { logger } from '@/lib/logger';
 import TagDisplay from '@/components/TagDisplay';
 
@@ -387,10 +388,14 @@ export default function ReviewQueue({
   // — Queue list —
   return (
     <div className="space-y-6">
+      <AnimatePresence mode="popLayout">
       {submissions.map((submission) => (
-        <div
+        <motion.div
           key={submission.id}
-          className="page-enter"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -4, scale: 0.98 }}
+          transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
           style={{ border: '1px solid var(--color-border)', borderRadius: '2px', padding: '1rem' }}
         >
           <div className="flex items-start justify-between" style={{ marginBottom: '1rem' }}>
@@ -716,8 +721,9 @@ export default function ReviewQueue({
           >
             View full submission &#8594;
           </button>
-        </div>
+        </motion.div>
       ))}
+      </AnimatePresence>
     </div>
   );
 }

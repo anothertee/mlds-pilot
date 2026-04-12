@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
 import { logger } from '@/lib/logger';
 import VideoRecorder from '@/components/VideoRecorder';
 
@@ -226,7 +227,16 @@ export default function UploadForm() {
 
   return (
     <>
-    <div style={{ display: 'flex', height: '100vh', backgroundColor: 'var(--color-surface)', overflow: 'hidden' }}>
+    <div style={{
+      display: 'flex',
+      height: '100vh',
+      backgroundColor: 'var(--color-surface)',
+      overflow: 'hidden',
+      filter: status === 'success' ? 'blur(4px)' : 'none',
+      opacity: status === 'success' ? 0.4 : 1,
+      transition: 'filter 600ms ease, opacity 600ms ease',
+      pointerEvents: status === 'success' ? 'none' : 'auto',
+    }}>
 
       {/* Left panel — form controls */}
       <aside style={{
@@ -512,9 +522,14 @@ export default function UploadForm() {
     </div>
 
     {/* Success popup */}
+    <AnimatePresence>
     {status === 'success' && result && (
-      <div
-        className="page-enter"
+      <motion.div
+        key="success"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
         style={{
           position: 'fixed',
           inset: 0,
@@ -596,8 +611,9 @@ export default function UploadForm() {
             View submission &#8594;
           </a>
         </div>
-      </div>
+      </motion.div>
     )}
+    </AnimatePresence>
     </>
   );
 }

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import UploadForm from '@/components/UploadForm';
 import InfoOverlay from '@/components/InfoOverlay';
 import ReviewerLink from '@/components/ReviewerLink';
+import Screensaver from '@/components/Screensaver';
 
 
 export default function UploadPage() {
@@ -120,6 +121,7 @@ export default function UploadPage() {
       <UploadForm />
       <InfoOverlay dark={false} />
       <ReviewerLink dark={false} />
+      <Screensaver />
     </>
   );
 }
