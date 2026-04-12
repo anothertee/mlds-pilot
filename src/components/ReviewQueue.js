@@ -396,7 +396,7 @@ export default function ReviewQueue({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -4, scale: 0.98 }}
           transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
-          style={{ border: '1px solid var(--color-border)', borderRadius: '2px', padding: '1rem' }}
+          style={{ border: '1px solid var(--color-border)', borderRadius: '2px', padding: '1rem', backgroundColor: '#ffffff' }}
         >
           <div className="flex items-start justify-between" style={{ marginBottom: '1rem' }}>
             <div>
