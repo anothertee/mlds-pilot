@@ -227,7 +227,16 @@ export default function UploadForm() {
 
   return (
     <>
-    <div style={{ display: 'flex', height: '100vh', backgroundColor: 'var(--color-surface)', overflow: 'hidden' }}>
+    <div style={{
+      display: 'flex',
+      height: '100vh',
+      backgroundColor: 'var(--color-surface)',
+      overflow: 'hidden',
+      filter: status === 'success' ? 'blur(4px)' : 'none',
+      opacity: status === 'success' ? 0.4 : 1,
+      transition: 'filter 600ms ease, opacity 600ms ease',
+      pointerEvents: status === 'success' ? 'none' : 'auto',
+    }}>
 
       {/* Left panel — form controls */}
       <aside style={{

@@ -1,5 +1,6 @@
 import { Fraunces, DM_Sans, DM_Mono } from "next/font/google";
 import "./globals.css";
+import PageTransition from "@/components/PageTransition";
 
 const fraunces = Fraunces({
   variable: "--font-fraunces",
@@ -29,7 +30,9 @@ export default function RootLayout({ children }) {
       lang="en"
       className={`${fraunces.variable} ${dmSans.variable} ${dmMono.variable} antialiased`}
     >
-      <body style={{ fontFamily: "var(--font-dm-sans), Arial, sans-serif" }}>{children}</body>
+      <body style={{ fontFamily: "var(--font-dm-sans), Arial, sans-serif" }}>
+        <PageTransition>{children}</PageTransition>
+      </body>
     </html>
   );
 }
