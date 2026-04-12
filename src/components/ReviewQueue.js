@@ -125,7 +125,7 @@ export default function ReviewQueue({
     borderRadius: '2px',
     padding: '0.375rem 0.75rem',
     fontSize: '0.75rem',
-    background: 'transparent',
+    background: '#ffffff',
     color: 'var(--color-body)',
     outline: 'none',
     fontFamily: 'var(--font-dm-sans), Arial, sans-serif',
@@ -205,6 +205,15 @@ export default function ReviewQueue({
               {s.status}
             </span>
           </div>
+        </div>
+
+        {/* Video player */}
+        <div style={{ marginBottom: '1.5rem', border: '1px solid var(--color-border)', borderRadius: '2px', overflow: 'hidden', backgroundColor: '#000' }}>
+          <video
+            src={`/api/download?submissionId=${s.id}&inline=true`}
+            controls
+            style={{ width: '100%', maxHeight: '360px', display: 'block' }}
+          />
         </div>
 
         {/* Contributor note */}

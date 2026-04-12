@@ -47,10 +47,11 @@ export async function GET(request) {
     const filePath = gcsUri.replace(`gs://${bucketName}/`, '');
     const file = storage.bucket(bucketName).file(filePath);
 
+    const inline = searchParams.get('inline') === 'true';
     const [signedUrl] = await file.getSignedUrl({
       action: 'read',
       expires: Date.now() + 15 * 60 * 1000,
-      responseDisposition: `attachment; filename="${filename}"`,
+      ...(inline ? {} : { responseDisposition: `attachment; filename="${filename}"` }),
     });
 
     logger.info('download', 'Signed URL generated', { submissionId });
