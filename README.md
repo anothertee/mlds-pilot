@@ -64,15 +64,16 @@ NEXT_PUBLIC_RECAPTCHA_SITE_KEY=
 # App Check debug token (local development only — never set in production)
 NEXT_PUBLIC_FIREBASE_APP_CHECK_DEBUG_TOKEN=
 
-# Google Cloud service account (private — server-side only)
+# Base URL (used for QR code generation on submission page)
+NEXT_PUBLIC_BASE_URL=https://your-deployment-url.vercel.app
+
+# Google Cloud service account — base64-encoded JSON credentials
+# Used by: /api/upload, /api/download, /api/analyze, /api/analyze/status, /lib/firebaseAdmin
 GOOGLE_APPLICATION_CREDENTIALS_BASE64=
 
-# Access control
+# Installation passwords (server-side only)
 FACILITATOR_PASSWORD=
 REVIEWER_PASSWORD=
-
-# Base URL (local development only)
-NEXT_PUBLIC_BASE_URL=http://localhost:3000
 ```
 
 `GOOGLE_APPLICATION_CREDENTIALS_BASE64` is the service account JSON file encoded as base64:
@@ -107,14 +108,17 @@ mlds-pilot/
 │   │   ├── UploadForm.js                # Upload and recording UI
 │   │   ├── VideoRecorder.js             # Webcam capture via MediaRecorder API
 │   │   ├── TagDisplay.js                # Machine tags vs community tags comparison
+│   │   ├── AnimatedTagDisplay.js        # Client wrapper for TagDisplay with Framer Motion
 │   │   ├── ReviewQueue.js               # Submission cards with annotation input
 │   │   ├── InfoOverlay.js               # Full-screen project information panel
 │   │   ├── ReviewerLink.js              # Fixed reviewer access button
-│   │   └── QRCode.js                    # QR code for submission URL
+│   │   ├── QRCode.js                    # QR code for submission URL
+│   │   ├── PageTransition.js            # Framer Motion fade-in wrapper for all pages
+│   │   ├── WaterCanvas.js               # CSS animated ambient background (welcome + screensaver)
+│   │   └── Screensaver.js               # 60s idle overlay for upload page
 │   └── lib/
 │       ├── firebase.js                  # Firebase client initialisation with App Check
-│       ├── firebaseAdmin.js             # Firebase Admin SDK for server-side Firestore
-│       ├── uploadVideo.js               # Legacy — superseded by /api/upload
+│       ├── firebaseAdmin.js             # Firebase Admin SDK (lazy-initialised for build safety)
 │       └── logger.js                    # Structured console logger (suppressed in production)
 ├── .env.example                         # Environment variable template
 ├── .env.local                           # Local values (gitignored)
@@ -255,8 +259,9 @@ feature/* ← individual features, PR into dev then dev into main
 
 | Layer | Technology | Version |
 |-------|-----------|---------|
-| Frontend | Next.js | 16.2 |
+| Frontend | Next.js | 15.2 |
 | UI | React + Tailwind CSS | 19 / 4 |
+| Animation | Framer Motion | — |
 | Hosting | Vercel | — |
 | Video storage | Google Cloud Storage | — |
 | Database | Firestore (Firebase) | — |

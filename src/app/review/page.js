@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { AnimatePresence, motion } from 'framer-motion';
 import ReviewQueue from '@/components/ReviewQueue';
 import { logger } from '@/lib/logger';
 
@@ -236,12 +237,22 @@ export default function ReviewPage() {
 
       {/* Main content */}
       <main style={{ flex: 1, overflowY: 'auto', padding: '2rem 3rem' }}>
-        <ReviewQueue
-          reviewerPassword={password}
-          status={activeTab}
-          onDecision={refreshCounts}
-          readOnly={activeTab !== 'auto_tagged'}
-        />
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+          >
+            <ReviewQueue
+              reviewerPassword={password}
+              status={activeTab}
+              onDecision={refreshCounts}
+              readOnly={activeTab !== 'auto_tagged'}
+            />
+          </motion.div>
+        </AnimatePresence>
       </main>
 
     </div>

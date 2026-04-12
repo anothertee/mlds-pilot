@@ -12,10 +12,13 @@
   --color-secondary: #6B7280;
   --color-border: #D4CFC7;
   --color-community: #4A6E6A;
+  --color-teal: #4A6E6A;
   --color-accent: #7A9E99;
   --color-approved: #C9A96E;
+  --color-gold: #C9A96E;
   --color-rejected: #6E3120;
   --color-processing: #2C3E3A;
+  --color-deep: #2C3E3A;
   --color-light-catch: #C9A96E;
 }
 

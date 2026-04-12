@@ -11,11 +11,13 @@ export default function ReviewerLink({ dark = false }) {
     textTransform: 'uppercase',
     letterSpacing: '0.05em',
     textDecoration: 'none',
-    border: dark ? '1.5px solid var(--color-border-dark)' : '1.5px solid var(--color-border)',
+    border: dark ? '1.5px solid var(--color-border-dark)' : '1.5px solid rgba(18,16,14,0.3)',
     borderRadius: '2px',
     padding: '0.5rem 1rem',
-    backgroundColor: dark ? 'transparent' : 'var(--color-surface)',
-    color: dark ? 'var(--color-secondary-dark)' : 'var(--color-secondary)',
+    backgroundColor: dark ? 'transparent' : 'rgba(248,248,248,0.4)',
+    backdropFilter: dark ? 'none' : 'blur(8px)',
+    WebkitBackdropFilter: dark ? 'none' : 'blur(8px)',
+    color: dark ? 'var(--color-secondary-dark)' : '#12100E',
     zIndex: 50,
   };
 
@@ -28,8 +30,7 @@ export default function ReviewerLink({ dark = false }) {
           e.currentTarget.style.borderColor = 'var(--color-ink-white)';
           e.currentTarget.style.color = 'var(--color-ink-white)';
         } else {
-          e.currentTarget.style.borderColor = 'var(--color-body)';
-          e.currentTarget.style.color = 'var(--color-body)';
+          e.currentTarget.style.backgroundColor = 'rgba(248,248,248,0.7)';
         }
       }}
       onMouseLeave={(e) => {
@@ -37,8 +38,7 @@ export default function ReviewerLink({ dark = false }) {
           e.currentTarget.style.borderColor = 'var(--color-border-dark)';
           e.currentTarget.style.color = 'var(--color-secondary-dark)';
         } else {
-          e.currentTarget.style.borderColor = 'var(--color-border)';
-          e.currentTarget.style.color = 'var(--color-secondary)';
+          e.currentTarget.style.backgroundColor = 'rgba(248,248,248,0.4)';
         }
       }}
     >
