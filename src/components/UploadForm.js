@@ -30,7 +30,8 @@ export default function UploadForm() {
   useEffect(() => {
     if (!file) return;
     const url = URL.createObjectURL(file);
-    setFileURL(url);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setFileURL(url); // object URL must be created and cleaned up in an effect
     return () => URL.revokeObjectURL(url);
   }, [file]);
 

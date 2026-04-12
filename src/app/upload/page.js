@@ -13,8 +13,11 @@ export default function UploadPage() {
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
+    // sessionStorage is browser-only — must read inside an effect
     const stored = sessionStorage.getItem('facilitator_auth');
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setAuthenticated(stored === 'true');
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setChecking(false);
   }, []);
 
