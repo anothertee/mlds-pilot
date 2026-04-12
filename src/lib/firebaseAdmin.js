@@ -17,5 +17,7 @@ function getFirebaseAdmin() {
   });
 }
 
-const app = getFirebaseAdmin();
-export const adminDb = admin.firestore(app);
+export function getAdminDb() {
+  const app = getFirebaseAdmin();
+  return admin.firestore(app);
+}

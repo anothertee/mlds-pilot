@@ -1,6 +1,6 @@
 import { GoogleAuth } from 'google-auth-library';
 import admin from 'firebase-admin';
-import { adminDb } from '@/lib/firebaseAdmin';
+import { getAdminDb } from '@/lib/firebaseAdmin';
 import { logger } from '@/lib/logger';
 
 const OPERATION_URL = 'https://videointelligence.googleapis.com/v1/operations';
@@ -96,7 +96,7 @@ export async function POST(request) {
       labels: autoTags.map((t) => t.label),
     });
 
-    await adminDb.collection('submissions').doc(submissionId).update({
+    await getAdminDb().collection('submissions').doc(submissionId).update({
       autoTags,
       status: 'auto_tagged',
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),

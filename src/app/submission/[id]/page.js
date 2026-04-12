@@ -1,4 +1,4 @@
-import { adminDb } from '@/lib/firebaseAdmin';
+import { getAdminDb } from '@/lib/firebaseAdmin';
 import TagDisplay from '@/components/TagDisplay';
 import QRCode from '@/components/QRCode';
 import InfoOverlay from '@/components/InfoOverlay';
@@ -6,7 +6,7 @@ import ReviewerLink from '@/components/ReviewerLink';
 
 export default async function SubmissionPage({ params }) {
   const { id } = await params;
-  const doc = await adminDb.collection('submissions').doc(id).get();
+  const doc = await getAdminDb().collection('submissions').doc(id).get();
 
   if (!doc.exists) {
     return (

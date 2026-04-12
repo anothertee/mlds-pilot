@@ -1,5 +1,5 @@
 import { Storage } from '@google-cloud/storage';
-import { adminDb } from '@/lib/firebaseAdmin';
+import { getAdminDb } from '@/lib/firebaseAdmin';
 import { logger } from '@/lib/logger';
 import admin from 'firebase-admin';
 
@@ -72,7 +72,7 @@ export async function POST(request) {
     const gcsUri = `gs://${bucketName}/videos/${filename}`;
     logger.info('upload', 'GCS URI generated', { gcsUri });
 
-    const docRef = await adminDb.collection('submissions').add({
+    const docRef = await getAdminDb().collection('submissions').add({
         gcsUri,
         filename,
         contributor,

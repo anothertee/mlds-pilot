@@ -1,5 +1,5 @@
 import admin from 'firebase-admin';
-import { adminDb } from '@/lib/firebaseAdmin';
+import { getAdminDb } from '@/lib/firebaseAdmin';
 import { logger } from '@/lib/logger';
 
 const VALID_STATUSES = ['approved', 'restricted', 'rejected'];
@@ -34,7 +34,7 @@ export async function POST(request) {
       humanTagCount: (humanTags || []).length,
     });
 
-    await adminDb.collection('submissions').doc(submissionId).update({
+    await getAdminDb().collection('submissions').doc(submissionId).update({
       status: decision,
       reviewerNote: note || '',
       humanTags: humanTags || [],
