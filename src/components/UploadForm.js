@@ -361,8 +361,9 @@ export default function UploadForm() {
             value={contributor}
             onChange={(e) => setContributor(e.target.value)}
             placeholder="Enter your name"
-            style={inputStyle}
-            onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--color-body)'; }}
+            disabled={isProcessing}
+            style={{ ...inputStyle, opacity: isProcessing ? 0.4 : 1, cursor: isProcessing ? 'not-allowed' : 'text' }}
+            onFocus={(e) => { if (!isProcessing) e.currentTarget.style.borderColor = 'var(--color-body)'; }}
             onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; }}
           />
         </div>
@@ -377,8 +378,9 @@ export default function UploadForm() {
             onChange={(e) => setNote(e.target.value)}
             placeholder="Describe the tradition, context, and meaning of this movement. Be specific — this information will be reviewed by community members."
             rows={4}
-            style={inputStyle}
-            onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--color-body)'; }}
+            disabled={isProcessing}
+            style={{ ...inputStyle, opacity: isProcessing ? 0.4 : 1, cursor: isProcessing ? 'not-allowed' : 'text', resize: 'none' }}
+            onFocus={(e) => { if (!isProcessing) e.currentTarget.style.borderColor = 'var(--color-body)'; }}
             onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; }}
           />
         </div>

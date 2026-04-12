@@ -9,6 +9,7 @@ export default function VideoRecorder({ onRecordingComplete }) {
   const [recordedURL, setRecordedURL] = useState(null);
   const [error, setError] = useState(null);
   const [duration, setDuration] = useState(0);
+  const [nearLimit, setNearLimit] = useState(false);
 
   const mediaRecorderRef = useRef(null);
   const streamRef = useRef(null);
@@ -81,6 +82,7 @@ export default function VideoRecorder({ onRecordingComplete }) {
 
     chunksRef.current = [];
     setDuration(0);
+    setNearLimit(false);
 
     const mimeType = getSupportedMimeType();
     mimeTypeRef.current = mimeType;
@@ -116,6 +118,7 @@ export default function VideoRecorder({ onRecordingComplete }) {
     timerRef.current = setInterval(() => {
       elapsed += 1;
       setDuration(elapsed);
+      if (elapsed >= MAX_DURATION - 30) setNearLimit(true);
       if (elapsed >= MAX_DURATION) {
         clearInterval(timerRef.current);
         if (mediaRecorderRef.current?.state === 'recording') {
@@ -240,6 +243,12 @@ export default function VideoRecorder({ onRecordingComplete }) {
               </div>
             )}
           </div>
+
+          {nearLimit && status === 'recording' && (
+            <p style={{ fontSize: '0.75rem', color: 'var(--color-rejected)', fontFamily: 'var(--font-dm-mono), monospace', flexShrink: 0 }}>
+              30 seconds remaining — recording will stop automatically.
+            </p>
+          )}
 
           <div style={{ flexShrink: 0 }}>
             {status === 'ready' && (
