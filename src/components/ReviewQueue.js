@@ -207,6 +207,15 @@ export default function ReviewQueue({
           </div>
         </div>
 
+        {/* Video player */}
+        <div style={{ marginBottom: '1.5rem', border: '1px solid var(--color-border)', borderRadius: '2px', overflow: 'hidden', backgroundColor: '#000' }}>
+          <video
+            src={`/api/download?submissionId=${s.id}&inline=true`}
+            controls
+            style={{ width: '100%', maxHeight: '360px', display: 'block' }}
+          />
+        </div>
+
         {/* Contributor note */}
         {s.note && (
           <div style={{ padding: '0.875rem', border: '1px solid var(--color-border)', borderRadius: '2px', marginBottom: '1.5rem' }}>
