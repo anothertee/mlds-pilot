@@ -255,7 +255,7 @@ feature/* ← individual features, PR into dev then dev into main
 
 | Layer | Technology | Version |
 |-------|-----------|---------|
-| Frontend | Next.js | 15 |
+| Frontend | Next.js | 16.2 |
 | UI | React + Tailwind CSS | 19 / 4 |
 | Hosting | Vercel | — |
 | Video storage | Google Cloud Storage | — |
