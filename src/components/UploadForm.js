@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { logger } from '@/lib/logger';
 import VideoRecorder from '@/components/VideoRecorder';
 
@@ -13,16 +13,46 @@ export default function UploadForm() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [inputMode, setInputMode] = useState('upload');
+  const [fileURL, setFileURL] = useState(null);
+  const [logs, setLogs] = useState([]);
+  const logsEndRef = useRef(null);
+  const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    logsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [logs]);
+
+  function addLog(message) {
+    setLogs((prev) => [...prev, { message, id: Date.now() + Math.random() }]);
+  }
+
+  useEffect(() => {
+    if (!file) {
+      setFileURL(null);
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    setFileURL(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+
+  const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
 
   function handleFileChange(e) {
     const selected = e.target.files[0];
-    if (selected && selected.type.startsWith('video/')) {
-      setFile(selected);
-      setError(null);
-    } else {
+    if (!selected) return;
+    if (!selected.type.startsWith('video/')) {
       setError('Please select a video file.');
       setFile(null);
+      return;
     }
+    if (selected.size > MAX_FILE_SIZE) {
+      setError('File is too large. Please upload a video under 500MB.');
+      setFile(null);
+      return;
+    }
+    setFile(selected);
+    setError(null);
   }
 
   function handleRecordingComplete(recordedFile) {
@@ -57,6 +87,11 @@ export default function UploadForm() {
 
     setStatus('uploading');
     setError(null);
+    setLogs([]);
+    setProgress(0);
+    addLog('Upload initiated.');
+
+    let fillInterval = null;
 
     try {
       const formData = new FormData();
@@ -64,29 +99,45 @@ export default function UploadForm() {
       formData.append('contributor', contributor);
       formData.append('note', note);
 
-      setProgress(25);
+      addLog('Transferring file...');
 
-      const uploadResponse = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
+      const data = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            setProgress(Math.round((e.loaded / e.total) * 60));
+          }
+        };
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve(JSON.parse(xhr.responseText));
+          } else {
+            try { reject(new Error(JSON.parse(xhr.responseText).error || 'Upload failed')); }
+            catch { reject(new Error('Upload failed')); }
+          }
+        };
+        xhr.onerror = () => reject(new Error('Upload failed'));
+        xhr.open('POST', '/api/upload');
+        xhr.send(formData);
       });
 
-      if (!uploadResponse.ok) {
-        const err = await uploadResponse.json();
-        throw new Error(err.error || 'Upload failed');
-      }
-
-      const data = await uploadResponse.json();
-      setProgress(100);
-
+      setProgress(60);
       logger.success('UploadForm', 'Upload complete', { id: data.id });
+      addLog('File received. Starting analysis...');
       setResult(data);
       setStatus('analyzing');
 
+      fillInterval = setInterval(() => {
+        setProgress((prev) => (prev < 90 ? prev + 1 : 90));
+      }, 600);
+
       const tags = await analyzeVideo(data.gcsUri, data.id);
+      clearInterval(fillInterval);
+      setProgress(100);
       setResult((prev) => ({ ...prev, autoTags: tags }));
       setStatus('success');
     } catch (err) {
+      if (fillInterval) clearInterval(fillInterval);
       logger.error('UploadForm', 'Process failed', { message: err.message });
       setError(err.message);
       setStatus('error');
@@ -95,6 +146,7 @@ export default function UploadForm() {
 
   async function analyzeVideo(gcsUri, submissionId) {
     logger.info('UploadForm', 'Starting auto-tagging', { submissionId });
+    addLog('Connecting to Video Intelligence API...');
 
     const startResponse = await fetch('/api/analyze', {
       method: 'POST',
@@ -109,6 +161,7 @@ export default function UploadForm() {
 
     const { operationName } = await startResponse.json();
     logger.info('UploadForm', 'Analysis started', { operationName });
+    addLog(`Analysis operation started.`);
 
     return new Promise((resolve, reject) => {
       const poll = setInterval(async () => {
@@ -132,9 +185,11 @@ export default function UploadForm() {
             logger.success('UploadForm', 'Auto-tagging complete', {
               tags: status.autoTags,
             });
+            addLog(`Auto-tagging complete — ${status.autoTags?.length ?? 0} tags generated.`);
             resolve(status.autoTags);
           } else {
             logger.info('UploadForm', 'Still processing...');
+            addLog('Still processing...');
           }
         } catch (error) {
           clearInterval(poll);
@@ -144,176 +199,406 @@ export default function UploadForm() {
     });
   }
 
+  function handleDismiss() {
+    setStatus('idle');
+    setResult(null);
+    setFile(null);
+    setContributor('');
+    setNote('');
+    setInputMode('upload');
+    setLogs([]);
+    setProgress(0);
+    setError(null);
+  }
+
   const isProcessing = status === 'uploading' || status === 'analyzing';
 
-  return (
-    <div className="max-w-xl mx-auto p-6 space-y-6">
-      <h1 className="text-2xl font-semibold text-gray-900">
-        Upload your movement
-      </h1>
-      <p className="text-gray-500 text-sm">
-        Upload or record a video of yourself dancing. The system will
-        auto-tag it, and you will be able to correct those tags.
-      </p>
+  const inputStyle = {
+    width: '100%',
+    border: '1px solid var(--color-border)',
+    borderRadius: '2px',
+    padding: '0.625rem 0.75rem',
+    fontSize: '0.875rem',
+    background: 'transparent',
+    color: 'var(--color-body)',
+    outline: 'none',
+    fontFamily: 'var(--font-dm-sans), Arial, sans-serif',
+  };
 
-      <div className="space-y-4">
-        <div className="flex border border-gray-200 rounded overflow-hidden">
+  return (
+    <>
+    <div style={{ display: 'flex', height: '100vh', backgroundColor: 'var(--color-surface)', overflow: 'hidden' }}>
+
+      {/* Left panel — form controls */}
+      <aside style={{
+        width: '340px',
+        minWidth: '340px',
+        borderRight: '1px solid var(--color-border)',
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '2rem 1.5rem',
+        height: '100vh',
+        overflowY: 'auto',
+        gap: '1.25rem',
+      }}>
+        <div>
+          <a
+            href="/"
+            style={{
+              display: 'inline-block',
+              fontSize: '0.75rem',
+              color: 'var(--color-machine)',
+              fontFamily: 'var(--font-dm-mono), monospace',
+              textDecoration: 'none',
+              marginBottom: '1rem',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-body)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-machine)'; }}
+          >
+            ← Exit
+          </a>
+          <h1 style={{ fontSize: '1.25rem', fontWeight: '600', color: 'var(--color-body)', fontFamily: 'var(--font-fraunces), serif', fontOpticalSizing: 'auto', lineHeight: '1.2', marginBottom: '0.375rem' }}>
+            Upload your movement
+          </h1>
+          <p style={{ color: 'var(--color-secondary)', fontSize: '0.875rem', lineHeight: '1.6' }}>
+            Upload or record a video of yourself dancing. The system will auto-tag it, and you will be able to correct those tags.
+          </p>
+        </div>
+
+        {/* Mode toggle */}
+        <div style={{ display: 'flex', border: '1px solid var(--color-border)', borderRadius: '2px', overflow: 'hidden' }}>
           <button
             onClick={() => { setInputMode('upload'); setFile(null); }}
             disabled={isProcessing}
-            className={`flex-1 py-2 text-sm font-medium transition-colors ${
-              inputMode === 'upload'
-                ? 'bg-gray-900 text-white'
-                : 'bg-white text-gray-500 hover:bg-gray-50'
-            }`}
+            style={{
+              flex: 1,
+              padding: '0.5rem',
+              fontSize: '0.875rem',
+              fontWeight: '500',
+              fontFamily: 'var(--font-dm-sans), Arial, sans-serif',
+              cursor: 'pointer',
+              border: 'none',
+              backgroundColor: inputMode === 'upload' ? 'var(--color-body)' : 'transparent',
+              color: inputMode === 'upload' ? 'var(--color-surface)' : 'var(--color-secondary)',
+            }}
           >
             Upload file
           </button>
           <button
             onClick={() => { setInputMode('record'); setFile(null); }}
             disabled={isProcessing}
-            className={`flex-1 py-2 text-sm font-medium transition-colors ${
-              inputMode === 'record'
-                ? 'bg-gray-900 text-white'
-                : 'bg-white text-gray-500 hover:bg-gray-50'
-            }`}
+            style={{
+              flex: 1,
+              padding: '0.5rem',
+              fontSize: '0.875rem',
+              fontWeight: '500',
+              fontFamily: 'var(--font-dm-sans), Arial, sans-serif',
+              cursor: 'pointer',
+              border: 'none',
+              backgroundColor: inputMode === 'record' ? 'var(--color-body)' : 'transparent',
+              color: inputMode === 'record' ? 'var(--color-surface)' : 'var(--color-secondary)',
+            }}
           >
             Record video
           </button>
         </div>
 
+        {/* Context blurb */}
+        <p style={{ fontSize: '0.75rem', color: 'var(--color-secondary)', lineHeight: '1.6' }}>
+          Any movement is welcome — dance, gesture, ritual, sport, or daily practice. Maximum 5 minutes.
+        </p>
+
+        {/* File picker — upload mode only */}
         {inputMode === 'upload' && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: 'var(--color-body)', marginBottom: '0.25rem' }}>
               Video file
             </label>
             <input
+              ref={fileInputRef}
               type="file"
               accept="video/*"
               onChange={handleFileChange}
-              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
+              style={{ display: 'none' }}
             />
-            {file && (
-              <div className="mt-3">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Preview
-                </label>
-                <video
-                  src={URL.createObjectURL(file)}
-                  controls
-                  className="w-full rounded border border-gray-200 h-48 object-cover"
-                />
-              </div>
-            )}
+            <button
+              onClick={() => fileInputRef.current.click()}
+              disabled={isProcessing}
+              style={{
+                padding: '0.5rem 1rem',
+                fontSize: '0.875rem',
+                fontWeight: '500',
+                fontFamily: 'var(--font-dm-sans), Arial, sans-serif',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                border: '1.5px solid var(--color-body)',
+                borderRadius: '2px',
+                background: 'transparent',
+                color: 'var(--color-body)',
+                cursor: 'pointer',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--color-body)';
+                e.currentTarget.style.color = 'var(--color-surface)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = 'var(--color-body)';
+              }}
+            >
+              Choose file
+            </button>
           </div>
         )}
 
-        {inputMode === 'record' && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Webcam
-            </label>
-            {file ? (
-              <div className="space-y-2">
-                <video
-                  src={URL.createObjectURL(file)}
-                  controls
-                  className="w-full rounded border border-gray-200 h-48 object-cover"
-                />
-                <button
-                  onClick={() => setFile(null)}
-                  className="text-xs text-gray-500 underline hover:text-gray-700"
-                >
-                  Record again
-                </button>
-              </div>
-            ) : (
-              <VideoRecorder onRecordingComplete={handleRecordingComplete} />
-            )}
-          </div>
-        )}
-
+        {/* Name */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Your name <span className="text-red-500">*</span>
+          <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: 'var(--color-body)', marginBottom: '0.25rem' }}>
+            Your name <span style={{ color: 'var(--color-rejected)' }}>*</span>
           </label>
           <input
             type="text"
             value={contributor}
             onChange={(e) => setContributor(e.target.value)}
             placeholder="Enter your name"
-            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+            disabled={isProcessing}
+            style={{ ...inputStyle, opacity: isProcessing ? 0.4 : 1, cursor: isProcessing ? 'not-allowed' : 'text' }}
+            onFocus={(e) => { if (!isProcessing) e.currentTarget.style.borderColor = 'var(--color-body)'; }}
+            onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; }}
           />
         </div>
 
+        {/* Note */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Note about this movement <span className="text-red-500">*</span>
+          <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: 'var(--color-body)', marginBottom: '0.25rem' }}>
+            Note about this movement <span style={{ color: 'var(--color-rejected)' }}>*</span>
           </label>
           <textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="Describe the tradition, context, and meaning of this movement. Be specific — this information will be reviewed by community members."
-            rows={3}
-            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+            rows={4}
+            disabled={isProcessing}
+            style={{ ...inputStyle, opacity: isProcessing ? 0.4 : 1, cursor: isProcessing ? 'not-allowed' : 'text', resize: 'none' }}
+            onFocus={(e) => { if (!isProcessing) e.currentTarget.style.borderColor = 'var(--color-body)'; }}
+            onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; }}
           />
         </div>
 
-        {status === 'uploading' && (
-          <div className="space-y-1">
-            <div className="w-full bg-gray-100 rounded-full h-2">
-              <div
-                className="bg-gray-800 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${progress}%` }}
-              />
+        {/* Progress bar — upload + analysis */}
+        {(status === 'uploading' || status === 'analyzing') && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+            <div style={{ width: '100%', backgroundColor: 'var(--color-border)', borderRadius: '2px', height: '2px' }}>
+              <div style={{ backgroundColor: 'var(--color-body)', height: '2px', borderRadius: '2px', width: `${progress}%`, transition: 'width 600ms ease' }} />
             </div>
-            <p className="text-sm text-gray-500">{progress}% uploaded</p>
-          </div>
-        )}
-
-        {status === 'analyzing' && (
-          <div className="p-4 bg-gray-50 rounded border border-gray-200">
-            <p className="text-sm text-gray-500 animate-pulse">
-              Analysing movement... this may take 20-30 seconds.
+            <p style={{ fontSize: '0.75rem', color: 'var(--color-secondary)', fontFamily: 'var(--font-dm-mono), monospace' }}>
+              {progress}% — {status === 'uploading' ? 'uploading' : 'analysing'}
             </p>
           </div>
         )}
 
-        {error && <p className="text-sm text-red-500">{error}</p>}
+        {/* Log terminal — uploading + analysing */}
+        {(status === 'uploading' || status === 'analyzing') && logs.length > 0 && (
+          <div style={{
+            backgroundColor: '#EFEFEF',
+            border: '1px solid var(--color-border)',
+            borderRadius: '2px',
+            padding: '0.625rem 0.75rem',
+            maxHeight: '7rem',
+            overflowY: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.25rem',
+          }}>
+            {logs.map((log) => (
+              <p key={log.id} style={{ fontSize: '0.75rem', color: 'var(--color-secondary)', fontFamily: 'var(--font-dm-mono), monospace', lineHeight: '1.4', margin: 0 }}>
+                <span style={{ color: 'var(--color-machine)', marginRight: '0.5rem', userSelect: 'none' }}>›</span>
+                {log.message}
+              </p>
+            ))}
+            <div ref={logsEndRef} />
+          </div>
+        )}
 
-        {status === 'success' && result && (
-          <div className="p-4 bg-gray-50 rounded border border-gray-200 space-y-3">
-            <p className="text-sm font-medium text-gray-700">
-              Upload complete
-            </p>
-            <p className="text-xs text-gray-500">
-              Submission ID: {result.id}
-            </p>
-            
-            <a
-              href={`/submission/${result.id}`}
-              className="text-xs text-gray-700 underline hover:text-gray-900"
-            >
-              View submission &#8594;
-            </a>
-            <p className="text-xs text-gray-500">
-              Your video has been submitted for community review.
+        {error && <p style={{ fontSize: '0.875rem', color: 'var(--color-rejected)' }}>{error}</p>}
+
+        {/* Upload button — pinned to bottom */}
+        <div style={{ marginTop: 'auto', paddingTop: '1rem' }}>
+          <button
+            onClick={handleUpload}
+            disabled={isProcessing || !file}
+            style={{
+              width: '100%',
+              padding: '0.625rem 1rem',
+              backgroundColor: 'transparent',
+              color: 'var(--color-body)',
+              fontSize: '0.875rem',
+              fontWeight: '500',
+              fontFamily: 'var(--font-dm-sans), Arial, sans-serif',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              border: '1.5px solid var(--color-body)',
+              borderRadius: '2px',
+              cursor: isProcessing || !file ? 'not-allowed' : 'pointer',
+              opacity: isProcessing || !file ? 0.4 : 1,
+            }}
+            onMouseEnter={(e) => {
+              if (!isProcessing && file) {
+                e.currentTarget.style.backgroundColor = 'var(--color-body)';
+                e.currentTarget.style.color = 'var(--color-surface)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.color = 'var(--color-body)';
+            }}
+          >
+            {status === 'uploading'
+              ? 'Uploading...'
+              : status === 'analyzing'
+              ? 'Analysing...'
+              : 'Upload video'}
+          </button>
+        </div>
+      </aside>
+
+      {/* Right panel — video area */}
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', backgroundColor: 'var(--color-surface)' }}>
+
+        {/* Upload mode — no file: placeholder */}
+        {inputMode === 'upload' && !file && (
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <p style={{ fontSize: '0.875rem', color: 'var(--color-machine)', fontFamily: 'var(--font-dm-mono), monospace' }}>
+              Select a video file to preview it here.
             </p>
           </div>
         )}
 
-        <button
-          onClick={handleUpload}
-          disabled={isProcessing || !file}
-          className="w-full py-2 px-4 bg-gray-900 text-white text-sm font-medium rounded hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          {status === 'uploading'
-            ? 'Uploading...'
-            : status === 'analyzing'
-            ? 'Analysing...'
-            : 'Upload video'}
-        </button>
-      </div>
+        {/* Upload mode — file selected: large preview */}
+        {inputMode === 'upload' && file && (
+          <video
+            src={fileURL}
+            controls
+            style={{ width: '100%', height: '100%', objectFit: 'contain', backgroundColor: '#000' }}
+          />
+        )}
+
+        {/* Record mode — no file: VideoRecorder fills panel */}
+        {inputMode === 'record' && !file && (
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '1.5rem', overflow: 'hidden' }}>
+            <VideoRecorder onRecordingComplete={handleRecordingComplete} />
+          </div>
+        )}
+
+        {/* Record mode — recording accepted: large preview + record again */}
+        {inputMode === 'record' && file && (
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <video
+              src={fileURL}
+              controls
+              style={{ flex: 1, width: '100%', objectFit: 'contain', backgroundColor: '#000' }}
+            />
+            <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid var(--color-border)' }}>
+              <button
+                onClick={() => setFile(null)}
+                style={{ fontSize: '0.75rem', color: 'var(--color-secondary)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', padding: 0, fontFamily: 'var(--font-dm-sans), Arial, sans-serif' }}
+              >
+                Record again
+              </button>
+            </div>
+          </div>
+        )}
+
+      </main>
     </div>
+
+    {/* Success popup */}
+    {status === 'success' && result && (
+      <div
+        className="page-enter"
+        style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(18, 16, 14, 0.7)',
+          zIndex: 200,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '1.5rem',
+        }}
+      >
+        <div style={{
+          position: 'relative',
+          backgroundColor: 'var(--color-surface)',
+          border: '1px solid var(--color-border)',
+          borderRadius: '2px',
+          padding: '2rem',
+          maxWidth: '22rem',
+          width: '100%',
+        }}>
+          <button
+            onClick={handleDismiss}
+            style={{
+              position: 'absolute',
+              top: '1rem',
+              right: '1rem',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'var(--color-machine)',
+              fontSize: '1rem',
+              lineHeight: 1,
+              padding: '0.25rem',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-body)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-machine)'; }}
+            aria-label="Dismiss"
+          >
+            ✕
+          </button>
+          <p style={{ fontSize: '0.75rem', fontFamily: 'var(--font-dm-mono), monospace', color: 'var(--color-machine)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.75rem' }}>
+            Complete
+          </p>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: '600', color: 'var(--color-body)', fontFamily: 'var(--font-fraunces), serif', fontOpticalSizing: 'auto', marginBottom: '0.5rem' }}>
+            Submission received
+          </h2>
+          <p style={{ fontSize: '0.875rem', color: 'var(--color-secondary)', lineHeight: '1.6', marginBottom: '1.25rem' }}>
+            Your video has been submitted for community review.
+          </p>
+          <p style={{ fontSize: '0.75rem', color: 'var(--color-machine)', fontFamily: 'var(--font-dm-mono), monospace', marginBottom: '1.5rem' }}>
+            ID: {result.id}
+          </p>
+          <a
+            href={`/submission/${result.id}`}
+            style={{
+              display: 'block',
+              textAlign: 'center',
+              padding: '0.625rem 1rem',
+              backgroundColor: 'transparent',
+              color: 'var(--color-body)',
+              fontSize: '0.875rem',
+              fontWeight: '500',
+              fontFamily: 'var(--font-dm-sans), Arial, sans-serif',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              border: '1.5px solid var(--color-body)',
+              borderRadius: '2px',
+              textDecoration: 'none',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--color-body)';
+              e.currentTarget.style.color = 'var(--color-surface)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.color = 'var(--color-body)';
+            }}
+          >
+            View submission &#8594;
+          </a>
+        </div>
+      </div>
+    )}
+    </>
   );
 }

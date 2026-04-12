@@ -9,11 +9,13 @@ export default function VideoRecorder({ onRecordingComplete }) {
   const [recordedURL, setRecordedURL] = useState(null);
   const [error, setError] = useState(null);
   const [duration, setDuration] = useState(0);
+  const [nearLimit, setNearLimit] = useState(false);
 
   const mediaRecorderRef = useRef(null);
   const streamRef = useRef(null);
   const chunksRef = useRef([]);
   const timerRef = useRef(null);
+  const mimeTypeRef = useRef('');
   const videoRef = useRef(null);
 
   const videoCallbackRef = useCallback((node) => {
@@ -32,6 +34,16 @@ export default function VideoRecorder({ onRecordingComplete }) {
       clearInterval(timerRef.current);
     };
   }, []);
+
+  const MAX_DURATION = 300;
+
+  function getSupportedMimeType() {
+    const types = ['video/mp4', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
+    for (const type of types) {
+      if (MediaRecorder.isTypeSupported(type)) return type;
+    }
+    return '';
+  }
 
   function stopStream() {
     if (streamRef.current) {
@@ -70,10 +82,15 @@ export default function VideoRecorder({ onRecordingComplete }) {
 
     chunksRef.current = [];
     setDuration(0);
+    setNearLimit(false);
 
-    const mediaRecorder = new MediaRecorder(streamRef.current, {
-      mimeType: 'video/webm',
-    });
+    const mimeType = getSupportedMimeType();
+    mimeTypeRef.current = mimeType;
+
+    const mediaRecorder = new MediaRecorder(
+      streamRef.current,
+      mimeType ? { mimeType } : {}
+    );
 
     mediaRecorder.ondataavailable = (e) => {
       if (e.data.size > 0) {
@@ -82,7 +99,7 @@ export default function VideoRecorder({ onRecordingComplete }) {
     };
 
     mediaRecorder.onstop = () => {
-      const blob = new Blob(chunksRef.current, { type: 'video/webm' });
+      const blob = new Blob(chunksRef.current, { type: mimeTypeRef.current || 'video/webm' });
       const url = URL.createObjectURL(blob);
       setRecordedBlob(blob);
       setRecordedURL(url);
@@ -97,8 +114,18 @@ export default function VideoRecorder({ onRecordingComplete }) {
     mediaRecorder.start(100);
     setStatus('recording');
 
+    let elapsed = 0;
     timerRef.current = setInterval(() => {
-      setDuration((prev) => prev + 1);
+      elapsed += 1;
+      setDuration(elapsed);
+      if (elapsed >= MAX_DURATION - 30) setNearLimit(true);
+      if (elapsed >= MAX_DURATION) {
+        clearInterval(timerRef.current);
+        if (mediaRecorderRef.current?.state === 'recording') {
+          mediaRecorderRef.current.stop();
+        }
+        stopStream();
+      }
     }, 1000);
 
     logger.info('VideoRecorder', 'Recording started');
@@ -125,8 +152,11 @@ export default function VideoRecorder({ onRecordingComplete }) {
 
   function useRecording() {
     if (!recordedBlob) return;
-    const file = new File([recordedBlob], `recording_${Date.now()}.webm`, {
-      type: 'video/webm',
+    URL.revokeObjectURL(recordedURL);
+    const mimeType = mimeTypeRef.current || 'video/webm';
+    const ext = mimeType.startsWith('video/mp4') ? 'mp4' : 'webm';
+    const file = new File([recordedBlob], `recording_${Date.now()}.${ext}`, {
+      type: mimeType,
     });
     logger.info('VideoRecorder', 'Recording accepted', {
       filename: file.name,
@@ -140,84 +170,188 @@ export default function VideoRecorder({ onRecordingComplete }) {
     return `${m}:${s}`;
   }
 
-  return (
-    <div className="space-y-3">
-      {error && <p className="text-xs text-red-500">{error}</p>}
+  const outlinedBtnBase = {
+    padding: '0.625rem 1.5rem',
+    fontSize: '0.875rem',
+    fontWeight: '500',
+    fontFamily: 'var(--font-dm-sans), Arial, sans-serif',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+    borderRadius: '2px',
+    cursor: 'pointer',
+    background: 'transparent',
+  };
 
-      {status === 'idle' && (
-        <button
-          onClick={startCamera}
-          className="w-full py-2 px-4 bg-gray-100 text-gray-700 text-sm font-medium rounded hover:bg-gray-200 transition-colors"
-        >
-          Enable camera
-        </button>
+  return (
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+
+      {error && (
+        <p style={{ fontSize: '0.75rem', color: 'var(--color-rejected)', flexShrink: 0 }}>{error}</p>
       )}
 
+      {/* Idle — camera not enabled */}
+      {status === 'idle' && (
+        <div style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          border: '1px solid var(--color-border)',
+          borderRadius: '2px',
+          gap: '1.5rem',
+        }}>
+          <p style={{ fontSize: '0.875rem', color: 'var(--color-machine)', fontFamily: 'var(--font-dm-mono), monospace' }}>
+            Camera not enabled
+          </p>
+          <button
+            onClick={startCamera}
+            style={{
+              ...outlinedBtnBase,
+              border: '1.5px solid var(--color-body)',
+              color: 'var(--color-body)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--color-body)';
+              e.currentTarget.style.color = 'var(--color-surface)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.color = 'var(--color-body)';
+            }}
+          >
+            Enable camera
+          </button>
+        </div>
+      )}
+
+      {/* Ready / Recording — live feed */}
       {(status === 'ready' || status === 'recording') && (
-        <div className="space-y-3">
-          <div className="relative">
+        <>
+          <div style={{ flex: 1, position: 'relative', overflow: 'hidden', borderRadius: '2px' }}>
             <video
               ref={videoCallbackRef}
               autoPlay
               muted
               playsInline
-              className="w-full rounded border border-gray-200 bg-gray-50 h-48 object-cover"
+              style={{ width: '100%', height: '100%', objectFit: 'cover', border: '1px solid var(--color-border)', borderRadius: '2px', backgroundColor: '#000', display: 'block' }}
             />
             {status === 'recording' && (
-              <div className="absolute top-2 right-2 flex items-center gap-1.5 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">
-                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+              <div style={{ position: 'absolute', top: '1rem', right: '1rem', display: 'flex', alignItems: 'center', gap: '0.375rem', backgroundColor: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: '0.75rem', padding: '0.375rem 0.625rem', borderRadius: '2px', fontFamily: 'var(--font-dm-mono), monospace' }}>
+                <span style={{ width: '0.5rem', height: '0.5rem', borderRadius: '50%', backgroundColor: 'var(--color-rejected)', display: 'inline-block', animation: 'breathe 1.5s ease-in-out infinite' }} />
                 {formatDuration(duration)}
               </div>
             )}
           </div>
 
-          {status === 'ready' && (
-            <button
-              onClick={startRecording}
-              className="w-full py-2 px-4 bg-gray-900 text-white text-sm font-medium rounded hover:bg-gray-700 transition-colors"
-            >
-              Start recording
-            </button>
+          {nearLimit && status === 'recording' && (
+            <p style={{ fontSize: '0.75rem', color: 'var(--color-rejected)', fontFamily: 'var(--font-dm-mono), monospace', flexShrink: 0 }}>
+              30 seconds remaining — recording will stop automatically.
+            </p>
           )}
 
-          {status === 'recording' && (
-            <button
-              onClick={stopRecording}
-              className="w-full py-2 px-4 bg-red-600 text-white text-sm font-medium rounded hover:bg-red-700 transition-colors"
-            >
-              Stop recording
-            </button>
-          )}
-        </div>
+          <div style={{ flexShrink: 0 }}>
+            {status === 'ready' && (
+              <button
+                onClick={startRecording}
+                style={{
+                  ...outlinedBtnBase,
+                  width: '100%',
+                  border: '1.5px solid var(--color-body)',
+                  color: 'var(--color-body)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--color-body)';
+                  e.currentTarget.style.color = 'var(--color-surface)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = 'var(--color-body)';
+                }}
+              >
+                Start recording
+              </button>
+            )}
+
+            {status === 'recording' && (
+              <button
+                onClick={stopRecording}
+                style={{
+                  ...outlinedBtnBase,
+                  width: '100%',
+                  border: '1.5px solid var(--color-rejected)',
+                  color: 'var(--color-rejected)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--color-rejected)';
+                  e.currentTarget.style.color = 'var(--color-surface)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = 'var(--color-rejected)';
+                }}
+              >
+                Stop recording
+              </button>
+            )}
+          </div>
+        </>
       )}
 
+      {/* Preview — recorded clip */}
       {status === 'preview' && recordedURL && (
-        <div className="space-y-3">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Preview
-            </label>
+        <>
+          <div style={{ flex: 1, position: 'relative', overflow: 'hidden', borderRadius: '2px' }}>
             <video
               src={recordedURL}
               controls
-              className="w-full rounded border border-gray-200 h-48 object-cover"
+              style={{ width: '100%', height: '100%', objectFit: 'contain', border: '1px solid var(--color-border)', borderRadius: '2px', backgroundColor: '#000', display: 'block' }}
             />
           </div>
-          <div className="flex gap-2">
+
+          <div style={{ flexShrink: 0, display: 'flex', gap: '0.75rem' }}>
             <button
               onClick={retake}
-              className="flex-1 py-2 px-4 bg-gray-100 text-gray-700 text-sm font-medium rounded hover:bg-gray-200 transition-colors"
+              style={{
+                ...outlinedBtnBase,
+                flex: 1,
+                border: '1.5px solid var(--color-border)',
+                color: 'var(--color-secondary)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--color-body)';
+                e.currentTarget.style.color = 'var(--color-surface)';
+                e.currentTarget.style.borderColor = 'var(--color-body)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = 'var(--color-secondary)';
+                e.currentTarget.style.borderColor = 'var(--color-border)';
+              }}
             >
               Retake
             </button>
             <button
               onClick={useRecording}
-              className="flex-1 py-2 px-4 bg-gray-900 text-white text-sm font-medium rounded hover:bg-gray-700 transition-colors"
+              style={{
+                ...outlinedBtnBase,
+                flex: 1,
+                border: '1.5px solid var(--color-body)',
+                color: 'var(--color-body)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--color-body)';
+                e.currentTarget.style.color = 'var(--color-surface)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = 'var(--color-body)';
+              }}
             >
               Use this recording
             </button>
           </div>
-        </div>
+        </>
       )}
     </div>
   );

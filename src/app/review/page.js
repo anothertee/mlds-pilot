@@ -5,11 +5,11 @@ import ReviewQueue from '@/components/ReviewQueue';
 import { logger } from '@/lib/logger';
 
 const TABS = [
-  { label: 'Pending', status: 'auto_tagged' },
-  { label: 'Approved', status: 'approved' },
-  { label: 'Restricted', status: 'restricted' },
-  { label: 'Rejected', status: 'rejected' },
-  { label: 'All', status: 'all' },
+  { label: 'Pending', status: 'auto_tagged', countKey: 'auto_tagged' },
+  { label: 'Approved', status: 'approved', countKey: 'approved' },
+  { label: 'Restricted', status: 'restricted', countKey: 'restricted' },
+  { label: 'Rejected', status: 'rejected', countKey: 'rejected' },
+  { label: 'All', status: 'all', countKey: null },
 ];
 
 export default function ReviewPage() {
@@ -27,7 +27,8 @@ export default function ReviewPage() {
 
     try {
       const response = await fetch(
-        `/api/submissions?reviewerPassword=${password}&status=all`
+        `/api/submissions?status=all`,
+        { headers: { 'x-reviewer-password': password } }
       );
 
       if (response.ok) {
@@ -60,7 +61,7 @@ export default function ReviewPage() {
   }
 
   function refreshCounts() {
-    fetch(`/api/submissions?reviewerPassword=${password}&status=all`)
+    fetch(`/api/submissions?status=all`, { headers: { 'x-reviewer-password': password } })
       .then((r) => r.json())
       .then((data) => computeCounts(data.submissions))
       .catch(() => {});
@@ -68,12 +69,20 @@ export default function ReviewPage() {
 
   if (!authenticated) {
     return (
-      <main className="min-h-screen bg-white py-12">
-        <div className="max-w-sm mx-auto px-6 space-y-4">
-          <h1 className="text-2xl font-semibold text-gray-900">
+      <main style={{ minHeight: '100vh', backgroundColor: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <a
+          href="/"
+          style={{ position: 'fixed', top: '1.5rem', left: '1.5rem', fontSize: '0.75rem', color: 'var(--color-machine)', textDecoration: 'none', fontFamily: 'var(--font-dm-mono), monospace' }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-body)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-machine)'; }}
+        >
+          &#8592; Home
+        </a>
+        <div className="max-w-sm w-full px-6 space-y-4">
+          <h1 style={{ fontSize: '1.5rem', fontWeight: '600', color: 'var(--color-body)', fontFamily: 'var(--font-fraunces), serif', fontOpticalSizing: 'auto' }}>
             Reviewer access
           </h1>
-          <p className="text-sm text-gray-500">
+          <p style={{ fontSize: '0.875rem', color: 'var(--color-secondary)' }}>
             Enter your reviewer password to access the dashboard.
           </p>
           <div className="space-y-3">
@@ -83,12 +92,45 @@ export default function ReviewPage() {
               onChange={(e) => setPassword(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
               placeholder="Password"
-              className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+              style={{
+                width: '100%',
+                border: '1px solid var(--color-border)',
+                borderRadius: '2px',
+                padding: '0.625rem 0.75rem',
+                fontSize: '0.875rem',
+                background: 'transparent',
+                color: 'var(--color-body)',
+                outline: 'none',
+                fontFamily: 'var(--font-dm-sans), Arial, sans-serif',
+              }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--color-body)'; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; }}
             />
-            {error && <p className="text-xs text-red-500">{error}</p>}
+            {error && <p style={{ fontSize: '0.75rem', color: 'var(--color-rejected)' }}>{error}</p>}
             <button
               onClick={handleLogin}
-              className="w-full py-2 px-4 bg-gray-900 text-white text-sm font-medium rounded hover:bg-gray-700 transition-colors"
+              style={{
+                width: '100%',
+                padding: '0.625rem 1rem',
+                backgroundColor: 'transparent',
+                color: 'var(--color-body)',
+                fontSize: '0.875rem',
+                fontWeight: '500',
+                fontFamily: 'var(--font-dm-sans), Arial, sans-serif',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                border: '1.5px solid var(--color-body)',
+                borderRadius: '2px',
+                cursor: 'pointer',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--color-body)';
+                e.currentTarget.style.color = 'var(--color-surface)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = 'var(--color-body)';
+              }}
             >
               Enter
             </button>
@@ -99,27 +141,30 @@ export default function ReviewPage() {
   }
 
   return (
-    <main className="min-h-screen bg-white py-12">
-      <div className="max-w-2xl mx-auto px-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold text-gray-900">
-              Review dashboard
-            </h1>
-            <p className="text-sm text-gray-500 mt-1">
-              Community knowledge governance
-            </p>
-          </div>
-          
-          <a
-            href="/"
-            className="text-xs text-gray-400 hover:text-gray-600"
-          >
-            &#8592; Home
-          </a>
+    <div style={{ display: 'flex', height: '100vh', backgroundColor: 'var(--color-surface)', overflow: 'hidden' }}>
+
+      {/* Sidebar */}
+      <aside style={{
+        width: '260px',
+        minWidth: '260px',
+        borderRight: '1px solid var(--color-border)',
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '2rem 1.5rem',
+        height: '100vh',
+        overflowY: 'auto',
+      }}>
+        <div style={{ marginBottom: '2rem' }}>
+          <h1 style={{ fontSize: '1.25rem', fontWeight: '600', color: 'var(--color-body)', fontFamily: 'var(--font-fraunces), serif', fontOpticalSizing: 'auto', lineHeight: '1.2', marginBottom: '0.375rem' }}>
+            Review dashboard
+          </h1>
+          <p style={{ fontSize: '0.75rem', color: 'var(--color-secondary)' }}>
+            Community knowledge governance
+          </p>
         </div>
 
-        <div className="grid grid-cols-5 gap-3">
+        {/* Stats */}
+        <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           {[
             { label: 'Submitted', key: 'submitted' },
             { label: 'Pending', key: 'auto_tagged' },
@@ -127,43 +172,77 @@ export default function ReviewPage() {
             { label: 'Restricted', key: 'restricted' },
             { label: 'Rejected', key: 'rejected' },
           ].map(({ label, key }) => (
-            <div
-              key={key}
-              className="border border-gray-200 rounded p-3 text-center"
-            >
-              <p className="text-2xl font-semibold text-gray-900">
+            <div key={key} style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--color-secondary)', fontFamily: 'var(--font-dm-mono), monospace', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                {label}
+              </span>
+              <span style={{ fontSize: '1.125rem', fontWeight: '600', color: 'var(--color-body)', fontFamily: 'var(--font-dm-mono), monospace' }}>
                 {counts[key] ?? 0}
-              </p>
-              <p className="text-xs text-gray-400 mt-0.5">{label}</p>
+              </span>
             </div>
           ))}
         </div>
 
-        <div className="border-b border-gray-200">
-          <div className="flex gap-0">
-            {TABS.map((tab) => (
-              <button
-                key={tab.status}
-                onClick={() => setActiveTab(tab.status)}
-                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                  activeTab === tab.status
-                    ? 'border-gray-900 text-gray-900'
-                    : 'border-transparent text-gray-400 hover:text-gray-600'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* Tab navigation */}
+        <nav style={{ borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+          {TABS.map((tab) => (
+            <button
+              key={tab.status}
+              onClick={() => setActiveTab(tab.status)}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '0.5rem 0.75rem',
+                fontSize: '0.875rem',
+                fontWeight: '500',
+                fontFamily: 'var(--font-dm-sans), Arial, sans-serif',
+                textAlign: 'left',
+                cursor: 'pointer',
+                border: activeTab === tab.status ? '1px solid var(--color-body)' : '1px solid transparent',
+                borderRadius: '2px',
+                backgroundColor: activeTab === tab.status ? 'var(--color-body)' : 'transparent',
+                color: activeTab === tab.status ? 'var(--color-surface)' : 'var(--color-secondary)',
+              }}
+            >
+              <span>{tab.label}</span>
+              {tab.countKey && counts[tab.countKey] !== undefined && (
+                <span style={{
+                  fontSize: '0.75rem',
+                  fontFamily: 'var(--font-dm-mono), monospace',
+                  opacity: 0.7,
+                }}>
+                  {counts[tab.countKey]}
+                </span>
+              )}
+            </button>
+          ))}
+        </nav>
 
+        {/* Home link */}
+        <div style={{ marginTop: 'auto', paddingTop: '2rem', borderTop: '1px solid var(--color-border)' }}>
+          <a
+            href="/"
+            style={{ fontSize: '0.75rem', color: 'var(--color-machine)', textDecoration: 'none', fontFamily: 'var(--font-dm-mono), monospace' }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-body)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-machine)'; }}
+          >
+            &#8592; Home
+          </a>
+        </div>
+      </aside>
+
+      {/* Main content */}
+      <main style={{ flex: 1, overflowY: 'auto', padding: '2rem 3rem' }}>
         <ReviewQueue
           reviewerPassword={password}
           status={activeTab}
           onDecision={refreshCounts}
           readOnly={activeTab !== 'auto_tagged'}
         />
-      </div>
-    </main>
+      </main>
+
+    </div>
   );
 }

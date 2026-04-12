@@ -12,7 +12,7 @@ const VALID_STATUSES = [
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const reviewerPassword = searchParams.get('reviewerPassword');
+    const reviewerPassword = request.headers.get('x-reviewer-password') || searchParams.get('reviewerPassword');
     const status = searchParams.get('status');
 
     if (reviewerPassword !== process.env.REVIEWER_PASSWORD) {
