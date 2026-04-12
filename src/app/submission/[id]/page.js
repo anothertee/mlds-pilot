@@ -81,24 +81,45 @@ export default async function SubmissionPage({ params }) {
               Submission ID: {id}
             </p>
 
-            <a
-              href="/upload"
-              style={{
-                fontSize: '0.875rem',
-                fontWeight: '500',
-                fontFamily: 'var(--font-dm-sans), Arial, sans-serif',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                textDecoration: 'none',
-                color: 'var(--color-body)',
-                border: '1.5px solid var(--color-body)',
-                borderRadius: '2px',
-                padding: '0.5rem 1rem',
-                display: 'inline-block',
-              }}
-            >
-              Make another submission &#8594;
-            </a>
+            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+              <a
+                href={`/api/download?submissionId=${id}`}
+                style={{
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
+                  fontFamily: 'var(--font-dm-sans), Arial, sans-serif',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  textDecoration: 'none',
+                  color: 'var(--color-secondary)',
+                  border: '1.5px solid var(--color-border)',
+                  borderRadius: '2px',
+                  padding: '0.5rem 1rem',
+                  display: 'inline-block',
+                }}
+              >
+                Download video
+              </a>
+
+              <a
+                href="/upload"
+                style={{
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
+                  fontFamily: 'var(--font-dm-sans), Arial, sans-serif',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  textDecoration: 'none',
+                  color: 'var(--color-body)',
+                  border: '1.5px solid var(--color-body)',
+                  borderRadius: '2px',
+                  padding: '0.5rem 1rem',
+                  display: 'inline-block',
+                }}
+              >
+                Make another submission &#8594;
+              </a>
+            </div>
           </div>
         </div>
       </main>
