@@ -14,6 +14,7 @@ export default function VideoRecorder({ onRecordingComplete }) {
   const streamRef = useRef(null);
   const chunksRef = useRef([]);
   const timerRef = useRef(null);
+  const mimeTypeRef = useRef('');
   const videoRef = useRef(null);
 
   const videoCallbackRef = useCallback((node) => {
@@ -32,6 +33,16 @@ export default function VideoRecorder({ onRecordingComplete }) {
       clearInterval(timerRef.current);
     };
   }, []);
+
+  const MAX_DURATION = 300;
+
+  function getSupportedMimeType() {
+    const types = ['video/mp4', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
+    for (const type of types) {
+      if (MediaRecorder.isTypeSupported(type)) return type;
+    }
+    return '';
+  }
 
   function stopStream() {
     if (streamRef.current) {
@@ -71,9 +82,13 @@ export default function VideoRecorder({ onRecordingComplete }) {
     chunksRef.current = [];
     setDuration(0);
 
-    const mediaRecorder = new MediaRecorder(streamRef.current, {
-      mimeType: 'video/webm',
-    });
+    const mimeType = getSupportedMimeType();
+    mimeTypeRef.current = mimeType;
+
+    const mediaRecorder = new MediaRecorder(
+      streamRef.current,
+      mimeType ? { mimeType } : {}
+    );
 
     mediaRecorder.ondataavailable = (e) => {
       if (e.data.size > 0) {
@@ -82,7 +97,7 @@ export default function VideoRecorder({ onRecordingComplete }) {
     };
 
     mediaRecorder.onstop = () => {
-      const blob = new Blob(chunksRef.current, { type: 'video/webm' });
+      const blob = new Blob(chunksRef.current, { type: mimeTypeRef.current || 'video/webm' });
       const url = URL.createObjectURL(blob);
       setRecordedBlob(blob);
       setRecordedURL(url);
@@ -97,8 +112,17 @@ export default function VideoRecorder({ onRecordingComplete }) {
     mediaRecorder.start(100);
     setStatus('recording');
 
+    let elapsed = 0;
     timerRef.current = setInterval(() => {
-      setDuration((prev) => prev + 1);
+      elapsed += 1;
+      setDuration(elapsed);
+      if (elapsed >= MAX_DURATION) {
+        clearInterval(timerRef.current);
+        if (mediaRecorderRef.current?.state === 'recording') {
+          mediaRecorderRef.current.stop();
+        }
+        stopStream();
+      }
     }, 1000);
 
     logger.info('VideoRecorder', 'Recording started');
@@ -125,8 +149,11 @@ export default function VideoRecorder({ onRecordingComplete }) {
 
   function useRecording() {
     if (!recordedBlob) return;
-    const file = new File([recordedBlob], `recording_${Date.now()}.webm`, {
-      type: 'video/webm',
+    URL.revokeObjectURL(recordedURL);
+    const mimeType = mimeTypeRef.current || 'video/webm';
+    const ext = mimeType.startsWith('video/mp4') ? 'mp4' : 'webm';
+    const file = new File([recordedBlob], `recording_${Date.now()}.${ext}`, {
+      type: mimeType,
     });
     logger.info('VideoRecorder', 'Recording accepted', {
       filename: file.name,

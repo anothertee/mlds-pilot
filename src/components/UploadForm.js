@@ -36,15 +36,23 @@ export default function UploadForm() {
     return () => URL.revokeObjectURL(url);
   }, [file]);
 
+  const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+
   function handleFileChange(e) {
     const selected = e.target.files[0];
-    if (selected && selected.type.startsWith('video/')) {
-      setFile(selected);
-      setError(null);
-    } else {
+    if (!selected) return;
+    if (!selected.type.startsWith('video/')) {
       setError('Please select a video file.');
       setFile(null);
+      return;
     }
+    if (selected.size > MAX_FILE_SIZE) {
+      setError('File is too large. Please upload a video under 500MB.');
+      setFile(null);
+      return;
+    }
+    setFile(selected);
+    setError(null);
   }
 
   function handleRecordingComplete(recordedFile) {
@@ -197,6 +205,7 @@ export default function UploadForm() {
     setFile(null);
     setContributor('');
     setNote('');
+    setInputMode('upload');
     setLogs([]);
     setProgress(0);
     setError(null);
@@ -293,6 +302,11 @@ export default function UploadForm() {
             Record video
           </button>
         </div>
+
+        {/* Context blurb */}
+        <p style={{ fontSize: '0.75rem', color: 'var(--color-secondary)', lineHeight: '1.6' }}>
+          Any movement is welcome — dance, gesture, ritual, sport, or daily practice. Maximum 5 minutes.
+        </p>
 
         {/* File picker — upload mode only */}
         {inputMode === 'upload' && (

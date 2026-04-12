@@ -27,7 +27,8 @@ export default function ReviewPage() {
 
     try {
       const response = await fetch(
-        `/api/submissions?reviewerPassword=${password}&status=all`
+        `/api/submissions?status=all`,
+        { headers: { 'x-reviewer-password': password } }
       );
 
       if (response.ok) {
@@ -60,7 +61,7 @@ export default function ReviewPage() {
   }
 
   function refreshCounts() {
-    fetch(`/api/submissions?reviewerPassword=${password}&status=all`)
+    fetch(`/api/submissions?status=all`, { headers: { 'x-reviewer-password': password } })
       .then((r) => r.json())
       .then((data) => computeCounts(data.submissions))
       .catch(() => {});

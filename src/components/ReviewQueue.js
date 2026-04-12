@@ -28,7 +28,8 @@ export default function ReviewQueue({
     setLoading(true);
     try {
       const response = await fetch(
-        `/api/submissions?reviewerPassword=${reviewerPassword}&status=${status}`
+        `/api/submissions?status=${status}`,
+        { headers: { 'x-reviewer-password': reviewerPassword } }
       );
 
       if (!response.ok) {
