@@ -18,6 +18,33 @@ function getStorageClient() {
 }
 
 export async function POST(request) {
+  const origin = request.headers.get('origin');
+  const referer = request.headers.get('referer');
+  const allowedOrigin = 'https://mlds-pilot.vercel.app';
+  const allowedLocalOrigin = 'http://localhost:3000';
+
+  const isAllowedOrigin =
+    origin === allowedOrigin ||
+    origin === allowedLocalOrigin ||
+    referer?.startsWith(allowedOrigin) ||
+    referer?.startsWith(allowedLocalOrigin);
+
+  if (!isAllowedOrigin) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const appCheckToken = request.headers.get('x-firebase-appcheck');
+
+  if (appCheckToken) {
+    try {
+      const { getAppCheck } = await import('firebase-admin/app-check');
+      const appCheck = getAppCheck();
+      await appCheck.verifyToken(appCheckToken);
+    } catch (err) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+  }
+
   try {
     const formData = await request.formData();
     const file = formData.get('file');
@@ -87,7 +114,16 @@ export async function POST(request) {
       id: docRef.id,
     });
 
-    return Response.json({ id: docRef.id, gcsUri });
+    return Response.json(
+      { id: docRef.id, gcsUri },
+      {
+        status: 200,
+        headers: {
+          'X-RateLimit-Limit': '10',
+          'X-RateLimit-Policy': 'per-hour',
+        },
+      }
+    );
   } catch (error) {
     logger.error('upload', 'Unexpected error', { message: error.message });
     return Response.json({ error: error.message }, { status: 500 });

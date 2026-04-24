@@ -1,6 +1,21 @@
 import { logger } from '@/lib/logger';
 
 export async function POST(request) {
+  const origin = request.headers.get('origin');
+  const referer = request.headers.get('referer');
+  const allowedOrigin = 'https://mlds-pilot.vercel.app';
+  const allowedLocalOrigin = 'http://localhost:3000';
+
+  const isAllowedOrigin =
+    origin === allowedOrigin ||
+    origin === allowedLocalOrigin ||
+    referer?.startsWith(allowedOrigin) ||
+    referer?.startsWith(allowedLocalOrigin);
+
+  if (!isAllowedOrigin) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const { password } = await request.json();
 

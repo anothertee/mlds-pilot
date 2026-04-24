@@ -10,6 +10,33 @@ const VALID_STATUSES = [
 ];
 
 export async function GET(request) {
+  const origin = request.headers.get('origin');
+  const referer = request.headers.get('referer');
+  const allowedOrigin = 'https://mlds-pilot.vercel.app';
+  const allowedLocalOrigin = 'http://localhost:3000';
+
+  const isAllowedOrigin =
+    origin === allowedOrigin ||
+    origin === allowedLocalOrigin ||
+    referer?.startsWith(allowedOrigin) ||
+    referer?.startsWith(allowedLocalOrigin);
+
+  if (!isAllowedOrigin) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const appCheckToken = request.headers.get('x-firebase-appcheck');
+
+  if (appCheckToken) {
+    try {
+      const { getAppCheck } = await import('firebase-admin/app-check');
+      const appCheck = getAppCheck();
+      await appCheck.verifyToken(appCheckToken);
+    } catch (err) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const reviewerPassword = request.headers.get('x-reviewer-password') || searchParams.get('reviewerPassword');

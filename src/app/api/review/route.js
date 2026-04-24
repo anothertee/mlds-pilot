@@ -5,6 +5,33 @@ import { logger } from '@/lib/logger';
 const VALID_STATUSES = ['approved', 'restricted', 'rejected'];
 
 export async function POST(request) {
+  const origin = request.headers.get('origin');
+  const referer = request.headers.get('referer');
+  const allowedOrigin = 'https://mlds-pilot.vercel.app';
+  const allowedLocalOrigin = 'http://localhost:3000';
+
+  const isAllowedOrigin =
+    origin === allowedOrigin ||
+    origin === allowedLocalOrigin ||
+    referer?.startsWith(allowedOrigin) ||
+    referer?.startsWith(allowedLocalOrigin);
+
+  if (!isAllowedOrigin) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const appCheckToken = request.headers.get('x-firebase-appcheck');
+
+  if (appCheckToken) {
+    try {
+      const { getAppCheck } = await import('firebase-admin/app-check');
+      const appCheck = getAppCheck();
+      await appCheck.verifyToken(appCheckToken);
+    } catch (err) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+  }
+
   try {
     const { submissionId, decision, note, humanTags, reviewerPassword } =
       await request.json();
