@@ -170,6 +170,19 @@ export default function InfoOverlay({ dark = true }) {
                   of a thesis in Interaction Design at George Brown College, Spring 2026.
                 </p>
               </div>
+
+              <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1.5rem' }}>
+                <a
+                  href="https://www.are.na/tamlyn-louhing/language-of-movement"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ fontSize: '0.875rem', color: 'var(--color-secondary-dark)', fontFamily: 'var(--font-dm-sans), Arial, sans-serif', textDecoration: 'underline', textUnderlineOffset: '3px' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-ink-white)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-secondary-dark)'; }}
+                >
+                  Learn more about this project ↗
+                </a>
+              </div>
             </div>
           </div>
         </div>
