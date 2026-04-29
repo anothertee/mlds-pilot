@@ -22,6 +22,10 @@
   --color-light-catch: #C9A96E;
 }
 
+html {
+  background-color: var(--color-surface);
+}
+
 body {
   color: var(--color-body);
   background-color: var(--color-surface);
@@ -45,7 +49,6 @@ body {
 
 * {
   transition:
-    background-color 300ms ease,
     color 300ms ease,
     border-color 300ms ease,
     opacity 300ms ease;
