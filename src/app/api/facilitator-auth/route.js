@@ -5,6 +5,7 @@ export async function POST(request) {
   const referer = request.headers.get('referer');
   const allowedOrigins = [
     'https://mlds-pilot.vercel.app',
+    'https://mlds-pilot-o0lh0sbu3-anothertees-projects.vercel.app',
     'https://www.movementlanguage.site',
     'https://movementlanguage.site',
     'http://localhost:3000',
