@@ -20,6 +20,7 @@ export default function ReviewPage() {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('auto_tagged');
   const [counts, setCounts] = useState({});
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
 
   async function handleLogin() {
     if (!password) {
@@ -38,6 +39,7 @@ export default function ReviewPage() {
         computeCounts(data.submissions);
         logger.success('ReviewPage', 'Reviewer authenticated');
         setAuthenticated(true);
+        setShowDisclaimer(true);
         setError(null);
       } else {
         logger.warn('ReviewPage', 'Invalid reviewer password');
@@ -89,11 +91,11 @@ export default function ReviewPage() {
           </p>
           <div className="space-y-3">
             <input
-              type="password"
+              type="text"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-              placeholder="Password"
+              placeholder="enter yes2026 to continue"
               style={{
                 width: '100%',
                 border: '1px solid var(--color-border)',
@@ -235,6 +237,66 @@ export default function ReviewPage() {
         </div>
       </aside>
 
+      {/* Show mode disclaimer modal */}
+      {showDisclaimer && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(18, 16, 14, 0.6)',
+          zIndex: 200,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '1.5rem',
+        }}>
+          <div style={{
+            backgroundColor: 'var(--color-surface)',
+            border: '1px solid var(--color-border)',
+            borderRadius: '2px',
+            padding: '2rem',
+            maxWidth: '22rem',
+            width: '100%',
+          }}>
+            <p style={{ fontSize: '0.75rem', fontFamily: 'var(--font-dm-mono), monospace', color: 'var(--color-machine)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.75rem' }}>
+              Show mode
+            </p>
+            <h2 style={{ fontSize: '1.125rem', fontWeight: '600', color: 'var(--color-body)', fontFamily: 'var(--font-fraunces), serif', fontOpticalSizing: 'auto', marginBottom: '0.75rem' }}>
+              Some functions are disabled
+            </h2>
+            <p style={{ fontSize: '0.875rem', color: 'var(--color-secondary)', lineHeight: '1.6', marginBottom: '1.5rem' }}>
+              Video playback and review decisions have been disabled for this installation to preserve the privacy of contributors. You can browse submissions and their auto-generated tags.
+            </p>
+            <button
+              onClick={() => setShowDisclaimer(false)}
+              style={{
+                width: '100%',
+                padding: '0.625rem 1rem',
+                backgroundColor: 'transparent',
+                color: 'var(--color-body)',
+                fontSize: '0.875rem',
+                fontWeight: '500',
+                fontFamily: 'var(--font-dm-sans), Arial, sans-serif',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                border: '1.5px solid var(--color-body)',
+                borderRadius: '2px',
+                cursor: 'pointer',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--color-body)';
+                e.currentTarget.style.color = 'var(--color-surface)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = 'var(--color-body)';
+              }}
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Main content */}
       <main style={{ flex: 1, overflowY: 'auto', padding: '2rem 3rem' }}>
         <AnimatePresence mode="wait">
@@ -250,6 +312,7 @@ export default function ReviewPage() {
               status={activeTab}
               onDecision={refreshCounts}
               readOnly={activeTab !== 'auto_tagged'}
+              showMode={true}
             />
           </motion.div>
         </AnimatePresence>

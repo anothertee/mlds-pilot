@@ -63,11 +63,11 @@ export default function UploadPage() {
           </p>
           <div className="space-y-3">
             <input
-              type="password"
+              type="text"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-              placeholder="Password"
+              placeholder="enter yes2026 to continue"
               style={{
                 width: '100%',
                 border: '1px solid var(--color-border)',
