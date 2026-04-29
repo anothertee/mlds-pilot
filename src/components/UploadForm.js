@@ -94,14 +94,24 @@ export default function UploadForm() {
     let fillInterval = null;
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('contributor', contributor);
-      formData.append('note', note);
+      // Step 1 — get a signed GCS upload URL
+      addLog('Requesting upload URL...');
+      const signedUrlRes = await fetch('/api/upload/signed-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename: file.name, contentType: file.type }),
+      });
 
+      if (!signedUrlRes.ok) {
+        const err = await signedUrlRes.json();
+        throw new Error(err.error || 'Failed to get upload URL');
+      }
+
+      const { signedUrl, gcsUri, filename } = await signedUrlRes.json();
+
+      // Step 2 — upload directly to GCS via signed URL
       addLog('Transferring file...');
-
-      const data = await new Promise((resolve, reject) => {
+      await new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.upload.onprogress = (e) => {
           if (e.lengthComputable) {
@@ -110,18 +120,33 @@ export default function UploadForm() {
         };
         xhr.onload = () => {
           if (xhr.status >= 200 && xhr.status < 300) {
-            resolve(JSON.parse(xhr.responseText));
-          } else if (xhr.status === 413) {
-            reject(new Error('File is too large to upload. Please compress your video or use a shorter clip.'));
+            resolve();
           } else {
-            try { reject(new Error(JSON.parse(xhr.responseText).error || 'Upload failed')); }
-            catch { reject(new Error('Upload failed')); }
+            reject(new Error(`Upload failed (${xhr.status})`));
           }
         };
         xhr.onerror = () => reject(new Error('Upload failed'));
-        xhr.open('POST', '/api/upload');
-        xhr.send(formData);
+        xhr.open('PUT', signedUrl);
+        xhr.setRequestHeader('Content-Type', file.type);
+        xhr.send(file);
       });
+
+      setProgress(60);
+
+      // Step 3 — create Firestore document
+      addLog('Saving submission...');
+      const metaRes = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ gcsUri, filename, contributor, note }),
+      });
+
+      if (!metaRes.ok) {
+        const err = await metaRes.json();
+        throw new Error(err.error || 'Failed to save submission');
+      }
+
+      const data = await metaRes.json();
 
       setProgress(60);
       logger.success('UploadForm', 'Upload complete', { id: data.id });

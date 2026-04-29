@@ -12,14 +12,15 @@ const VALID_STATUSES = [
 export async function GET(request) {
   const origin = request.headers.get('origin');
   const referer = request.headers.get('referer');
-  const allowedOrigin = 'https://mlds-pilot.vercel.app';
-  const allowedLocalOrigin = 'http://localhost:3000';
+  const allowedOrigins = [
+    'https://mlds-pilot.vercel.app',
+    'https://www.movementlanguage.site',
+    'https://movementlanguage.site',
+    'http://localhost:3000',
+  ];
 
   const isAllowedOrigin =
-    origin === allowedOrigin ||
-    origin === allowedLocalOrigin ||
-    referer?.startsWith(allowedOrigin) ||
-    referer?.startsWith(allowedLocalOrigin);
+    allowedOrigins.some((o) => origin === o || referer?.startsWith(o));
 
   if (!isAllowedOrigin) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });

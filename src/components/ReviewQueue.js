@@ -10,6 +10,7 @@ export default function ReviewQueue({
   status = 'auto_tagged',
   onDecision,
   readOnly = false,
+  showMode = false,
 }) {
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -212,6 +213,8 @@ export default function ReviewQueue({
           <video
             src={`/api/download?submissionId=${s.id}&inline=true`}
             controls
+            controlsList="nodownload"
+            onContextMenu={(e) => e.preventDefault()}
             style={{ width: '100%', maxHeight: '360px', display: 'block' }}
           />
         </div>
@@ -244,8 +247,35 @@ export default function ReviewQueue({
           </div>
         )}
 
+        {/* Disabled action buttons — show mode */}
+        {showMode && (
+          <div style={{ display: 'flex', gap: '0.5rem', opacity: 0.35, pointerEvents: 'none', cursor: 'not-allowed' }}>
+            {['Approve', 'Restrict', 'Reject'].map((label) => (
+              <button
+                key={label}
+                disabled
+                style={{
+                  flex: 1,
+                  padding: '0.625rem 0.75rem',
+                  fontSize: '0.75rem',
+                  fontWeight: '500',
+                  fontFamily: 'var(--font-dm-sans), Arial, sans-serif',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  border: '1.5px solid var(--color-body)',
+                  borderRadius: '2px',
+                  background: 'transparent',
+                  color: 'var(--color-body)',
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Review form — pending tab */}
-        {!readOnly && (
+        {!readOnly && !showMode && (
           <>
             <div style={{ marginBottom: '1rem' }}>
               <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '500', color: 'var(--color-secondary)', marginBottom: '0.25rem' }}>
@@ -723,9 +753,20 @@ export default function ReviewQueue({
           )}
 
           <button
-            onClick={() => setDetailSubmission(submission)}
-            style={{ display: 'block', fontSize: '0.75rem', color: 'var(--color-machine)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'var(--font-dm-mono), monospace' }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-body)'; }}
+            onClick={() => !showMode && setDetailSubmission(submission)}
+            disabled={showMode}
+            style={{
+              display: 'block',
+              fontSize: '0.75rem',
+              color: 'var(--color-machine)',
+              background: 'none',
+              border: 'none',
+              cursor: showMode ? 'not-allowed' : 'pointer',
+              padding: 0,
+              fontFamily: 'var(--font-dm-mono), monospace',
+              opacity: showMode ? 0.35 : 1,
+            }}
+            onMouseEnter={(e) => { if (!showMode) e.currentTarget.style.color = 'var(--color-body)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-machine)'; }}
           >
             View full submission &#8594;

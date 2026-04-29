@@ -1,5 +1,4 @@
 import { Storage } from '@google-cloud/storage';
-import { getAdminDb } from '@/lib/firebaseAdmin';
 import { logger } from '@/lib/logger';
 
 function getStorageClient() {
@@ -16,7 +15,7 @@ function getStorageClient() {
   });
 }
 
-export async function GET(request) {
+export async function POST(request) {
   const origin = request.headers.get('origin');
   const referer = request.headers.get('referer');
   const allowedOrigins = [
@@ -34,47 +33,34 @@ export async function GET(request) {
   }
 
   try {
-    const { searchParams } = new URL(request.url);
-    const submissionId = searchParams.get('submissionId');
+    const { filename: originalFilename, contentType } = await request.json();
 
-    if (!submissionId) {
+    if (!originalFilename || !contentType) {
       return Response.json(
-        { error: 'submissionId is required' },
+        { error: 'filename and contentType are required' },
         { status: 400 }
       );
     }
 
-    const doc = await getAdminDb()
-      .collection('submissions')
-      .doc(submissionId)
-      .get();
-
-    if (!doc.exists) {
-      return Response.json(
-        { error: 'Submission not found' },
-        { status: 404 }
-      );
-    }
-
-    const { gcsUri, filename } = doc.data();
+    const timestamp = Date.now();
+    const filename = `${timestamp}_${originalFilename}`;
+    const bucketName = 'mlds-project-videos';
+    const gcsUri = `gs://${bucketName}/videos/${filename}`;
 
     const storage = getStorageClient();
-    const bucketName = 'mlds-project-videos';
-    const filePath = gcsUri.replace(`gs://${bucketName}/`, '');
-    const file = storage.bucket(bucketName).file(filePath);
+    const file = storage.bucket(bucketName).file(`videos/${filename}`);
 
-    const inline = searchParams.get('inline') === 'true';
     const [signedUrl] = await file.getSignedUrl({
-      action: 'read',
+      action: 'write',
       expires: Date.now() + 15 * 60 * 1000,
-      ...(inline ? {} : { responseDisposition: `attachment; filename="${filename}"` }),
+      contentType,
     });
 
-    logger.info('download', 'Signed URL generated', { submissionId });
+    logger.info('upload/signed-url', 'Signed URL generated', { filename });
 
-    return Response.redirect(signedUrl);
+    return Response.json({ signedUrl, gcsUri, filename });
   } catch (error) {
-    logger.error('download', 'Unexpected error', { message: error.message });
+    logger.error('upload/signed-url', 'Unexpected error', { message: error.message });
     return Response.json({ error: error.message }, { status: 500 });
   }
 }
